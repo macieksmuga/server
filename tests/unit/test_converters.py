@@ -28,7 +28,7 @@ class TestSamConverter(unittest.TestCase):
         lines = readsFile.readlines()
         reads = []
         for line in lines:
-            read = protocol.GAReadAlignment.fromJsonString(line)
+            read = protocol.ReadAlignment.fromJsonString(line)
             reads.append(read)
         return reads
 
@@ -38,7 +38,7 @@ class TestSamConverter(unittest.TestCase):
         return httpClient
 
     def getSearchReadsRequest(self):
-        request = protocol.GASearchReadsRequest()
+        request = protocol.SearchReadsRequest()
         return request
 
     def getSearchReadsResponse(self, request):
@@ -49,6 +49,7 @@ class TestSamConverterLogic(TestSamConverter):
     """
     Test the SamConverter logic
     """
+    @unittest.skipIf(protocol.version.startswith("0.6"), "")
     def testSamConverter(self):
         mockPysam = mock.Mock()
         with mock.patch('pysam.AlignmentFile', mockPysam):
@@ -82,8 +83,10 @@ class TestSamConverterRoundTrip(TestSamConverter):
             # TODO more in-depth testing
             samfile.close()
 
+    @unittest.skipIf(protocol.version.startswith("0.6"), "")
     def testPlainText(self):
         self._testRoundTrip(False)
 
+    @unittest.skipIf(protocol.version.startswith("0.6"), "")
     def testBinary(self):
         self._testRoundTrip(True)

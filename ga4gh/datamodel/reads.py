@@ -24,15 +24,15 @@ class SamCigar(object):
     # see http://pysam.readthedocs.org/en/latest/api.html
     # #pysam.AlignedSegment.cigartuples
     cigarStrings = [
-        protocol.GACigarOperation.ALIGNMENT_MATCH,
-        protocol.GACigarOperation.INSERT,
-        protocol.GACigarOperation.DELETE,
-        protocol.GACigarOperation.SKIP,
-        protocol.GACigarOperation.CLIP_SOFT,
-        protocol.GACigarOperation.CLIP_HARD,
-        protocol.GACigarOperation.PAD,
-        protocol.GACigarOperation.SEQUENCE_MATCH,
-        protocol.GACigarOperation.SEQUENCE_MISMATCH,
+        protocol.CigarOperation.ALIGNMENT_MATCH,
+        protocol.CigarOperation.INSERT,
+        protocol.CigarOperation.DELETE,
+        protocol.CigarOperation.SKIP,
+        protocol.CigarOperation.CLIP_SOFT,
+        protocol.CigarOperation.CLIP_HARD,
+        protocol.CigarOperation.PAD,
+        protocol.CigarOperation.SEQUENCE_MATCH,
+        protocol.CigarOperation.SEQUENCE_MISMATCH,
     ]
 
     @classmethod
@@ -90,7 +90,7 @@ class AbstractReadGroupSet(datamodel.DatamodelObject):
         """
         Returns the GA4GH protocol representation of this ReadGroupSet.
         """
-        readGroupSet = protocol.GAReadGroupSet()
+        readGroupSet = protocol.ReadGroupSet()
         readGroupSet.id = self._id
         readGroupSet.readGroups = [
             readGroup.toProtocolElement() for readGroup in self._readGroups]
@@ -150,7 +150,7 @@ class AbstractReadGroup(object):
         # TODO this is very incomplete, but we don't have the
         # implementation to fill out the rest of the fields currently
         now = protocol.convertDatetime(datetime.datetime.now())
-        readGroup = protocol.GAReadGroup()
+        readGroup = protocol.ReadGroup()
         readGroup.id = self._id
         readGroup.created = now
         readGroup.updated = now
@@ -182,14 +182,15 @@ class SimulatedReadGroup(AbstractReadGroup):
     def _createReadAlignment(self, i):
         # TODO fill out a bit more
         id_ = "{}:simulated{}".format(self._id, i)
-        alignment = protocol.GAReadAlignment()
+        alignment = protocol.ReadAlignment()
         alignment.alignedQuality = [1, 2, 3]
         alignment.alignedSequence = "ACT"
-        gaPosition = protocol.GAPosition()
-        gaPosition.position = 0
-        gaPosition.referenceName = "whatevs"
-        gaPosition.reverseStrand = False
-        gaLinearAlignment = protocol.GALinearAlignment()
+        gaPosition = protocol.Side()
+        gaPosition.base = protocol.Position()
+        gaPosition.base.position = 0
+        gaPosition.base.referenceName = "whatevs"
+        gaPosition.strand = protocol.Strand.POS_STRAND
+        gaLinearAlignment = protocol.LinearAlignment()
         gaLinearAlignment.position = gaPosition
         alignment.alignment = gaLinearAlignment
         alignment.duplicateFragment = False
@@ -245,19 +246,20 @@ class HtslibReadGroup(datamodel.PysamSanitizer, AbstractReadGroup):
         """
         # TODO fill out remaining fields
         # TODO refine in tandem with code in converters module
-        ret = protocol.GAReadAlignment()
+        ret = protocol.ReadAlignment()
         ret.alignedQuality = list(read.query_qualities)
         ret.alignedSequence = read.query_sequence
-        ret.alignment = protocol.GALinearAlignment()
+        ret.alignment = protocol.LinearAlignment()
         ret.alignment.mappingQuality = read.mapping_quality
-        ret.alignment.position = protocol.GAPosition()
-        ret.alignment.position.referenceName = self._samFile.getrname(
+        ret.alignment.position = protocol.Side()
+        ret.alignment.position.base = protocol.Position()
+        ret.alignment.position.base.referenceName = self._samFile.getrname(
             read.reference_id)
-        ret.alignment.position.position = read.reference_start
-        ret.alignment.position.reverseStrand = False  # TODO fix this!
+        ret.alignment.position.base.position = read.reference_start
+        ret.alignment.position.strand = protocol.Strand.POS_STRAND  # TODO fix this!
         ret.alignment.cigar = []
         for operation, length in read.cigar:
-            gaCigarUnit = protocol.GACigarUnit()
+            gaCigarUnit = protocol.CigarUnit()
             gaCigarUnit.operation = SamCigar.int2ga(operation)
             gaCigarUnit.operationLength = length
             gaCigarUnit.referenceSequence = None  # TODO fix this!
@@ -272,11 +274,12 @@ class HtslibReadGroup(datamodel.PysamSanitizer, AbstractReadGroup):
         ret.info = {key: [str(value)] for key, value in read.tags}
         ret.nextMatePosition = None
         if read.next_reference_id != -1:
-            ret.nextMatePosition = protocol.GAPosition()
-            ret.nextMatePosition.referenceName = self._samFile.getrname(
+            ret.nextMatePosition = protocol.Side()
+            ret.nextMatePosition.base = protocol.Position()
+            ret.nextMatePosition.base.referenceName = self._samFile.getrname(
                 read.next_reference_id)
-            ret.nextMatePosition.position = read.next_reference_start
-            ret.nextMatePosition.reverseStrand = False  # TODO fix this!
+            ret.nextMatePosition.base.position = read.next_reference_start
+            ret.nextMatePosition.strand = protocol.Strand.POS_STRAND  # TODO fix this!
         # TODO Is this the correct mapping between numberReads and
         # sam flag 0x1? What about the mapping between numberReads
         # and 0x40 and 0x80?

@@ -22,6 +22,7 @@ from snakefood.fallback.collections import defaultdict
 from snakefood.roots import find_roots, relfile
 
 import tests.utils as utils
+import ga4gh.protocol as protocol
 
 
 graph = None
@@ -175,6 +176,7 @@ class ImportGraphLayerChecker(object):
         'libraries': ['ga4gh/converters.py', 'ga4gh/avrotools.py'],
         'protocol': ['ga4gh/protocol.py', 'ga4gh/_protocol_definitions.py'],
         'config': ['ga4gh/serverconfig.py'],
+        'sidegraph':['ga4gh/sidegraph.py'],
     }
 
     # each moduleGroupName has one and only one entry here
@@ -188,6 +190,7 @@ class ImportGraphLayerChecker(object):
         ['exceptions'],
         ['config'],
         ['protocol'],
+        ['sidegraph']
     ]
 
     def __init__(self, graph):

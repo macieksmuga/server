@@ -62,7 +62,7 @@ class ReadGroupSetTest(datadriven.DataDrivenTest):
         return reads.HtslibReadGroupSet
 
     def getProtocolClass(self):
-        return protocol.GAReadGroupSet
+        return protocol.ReadGroupSet
 
     def testGetReadAlignmentsBothRefs(self):
         # test that querying by both referenceName and referenceId fails
@@ -83,11 +83,11 @@ class ReadGroupSetTest(datadriven.DataDrivenTest):
         readGroupSet = self._gaObject
         for readGroup in readGroupSet.getReadGroups():
             self.assertValid(
-                protocol.GAReadGroup,
+                protocol.ReadGroup,
                 readGroup.toProtocolElement().toJsonDict())
             for gaAlignment in readGroup.getReadAlignments():
                 self.assertValid(
-                    protocol.GAReadAlignment,
+                    protocol.ReadAlignment,
                     gaAlignment.toJsonDict())
 
     def testGetReadAlignmentsRefName(self):
@@ -139,7 +139,7 @@ class ReadGroupSetTest(datadriven.DataDrivenTest):
                 length = len(alignments)
                 if length < 2:
                     continue
-                positions = [read.alignment.position.position
+                positions = [read.alignment.position.base.position
                              for read in alignments]
                 if length != len(set(positions)):
                     continue
@@ -177,10 +177,10 @@ class ReadGroupSetTest(datadriven.DataDrivenTest):
             gaAlignment.alignment.mappingQuality,
             pysamAlignment.mapping_quality)
         self.assertEqual(
-            gaAlignment.alignment.position.referenceName,
+            gaAlignment.alignment.position.base.referenceName,
             readGroupInfo.samFile.getrname(pysamAlignment.reference_id))
         self.assertEqual(
-            gaAlignment.alignment.position.position,
+            gaAlignment.alignment.position.base.position,
             pysamAlignment.reference_start)
         # TODO test reverseStrand on position and on nextMatePosition once
         # it has been implemented.
@@ -207,10 +207,10 @@ class ReadGroupSetTest(datadriven.DataDrivenTest):
             {key: [str(value)] for key, value in pysamAlignment.tags})
         if pysamAlignment.next_reference_id != -1:
             self.assertEqual(
-                gaAlignment.nextMatePosition.position,
+                gaAlignment.nextMatePosition.base.position,
                 pysamAlignment.next_reference_start)
             self.assertEqual(
-                gaAlignment.nextMatePosition.referenceName,
+                gaAlignment.nextMatePosition.base.referenceName,
                 readGroupInfo.samFile.getrname(
                     pysamAlignment.next_reference_id))
         else:

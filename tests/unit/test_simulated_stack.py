@@ -55,9 +55,10 @@ class TestSimulatedStack(unittest.TestCase):
             path, headers={'Content-type': 'application/json'},
             data=data)
 
+    @unittest.skipIf(protocol.version.startswith("0.6"), "")
     def testVariantSetsSearch(self):
         expectedIds = self.variantSetIds
-        request = protocol.GASearchVariantSetsRequest()
+        request = protocol.SearchVariantSetsRequest()
         request.pageSize = len(expectedIds)
         path = utils.applyVersion('/variantsets/search')
         response = self.sendJsonPostRequest(
@@ -65,9 +66,9 @@ class TestSimulatedStack(unittest.TestCase):
 
         self.assertEqual(200, response.status_code)
 
-        responseData = protocol.GASearchVariantSetsResponse.fromJsonString(
+        responseData = protocol.SearchVariantSetsResponse.fromJsonString(
             response.data)
-        self.assertTrue(protocol.GASearchVariantSetsResponse.validate(
+        self.assertTrue(protocol.SearchVariantSetsResponse.validate(
             responseData.toJsonDict()))
 
         self.assertIsNone(responseData.nextPageToken)
@@ -75,11 +76,12 @@ class TestSimulatedStack(unittest.TestCase):
         for variantSet in responseData.variantSets:
             self.assertTrue(variantSet.id in expectedIds)
 
+    @unittest.skipIf(protocol.version.startswith("0.6"), "")
     def testVariantsSearch(self):
         expectedIds = self.variantSetIds[:1]
         referenceName = '1'
 
-        request = protocol.GASearchVariantsRequest()
+        request = protocol.SearchVariantsRequest()
         request.referenceName = referenceName
         request.start = 0
         request.end = 0
@@ -90,7 +92,7 @@ class TestSimulatedStack(unittest.TestCase):
         response = self.sendJsonPostRequest(
             path, request.toJsonString())
         self.assertEqual(200, response.status_code)
-        responseData = protocol.GASearchVariantsResponse.fromJsonString(
+        responseData = protocol.SearchVariantsResponse.fromJsonString(
             response.data)
         self.assertIsNone(responseData.nextPageToken)
         self.assertEqual([], responseData.variants)
@@ -101,9 +103,9 @@ class TestSimulatedStack(unittest.TestCase):
         response = self.sendJsonPostRequest(
             path, request.toJsonString())
         self.assertEqual(200, response.status_code)
-        responseData = protocol.GASearchVariantsResponse.fromJsonString(
+        responseData = protocol.SearchVariantsResponse.fromJsonString(
             response.data)
-        self.assertTrue(protocol.GASearchVariantsResponse.validate(
+        self.assertTrue(protocol.SearchVariantsResponse.validate(
             responseData.toJsonDict()))
         self.assertGreater(len(responseData.variants), 0)
 
@@ -123,7 +125,7 @@ class TestSimulatedStack(unittest.TestCase):
     def testCallSetsSearch(self):
         # TODO remove the @nottest decorator here once calls have been
         # properly implemented in the simulator.
-        request = protocol.GASearchCallSetsRequest()
+        request = protocol.SearchCallSetsRequest()
         request.name = None
         path = utils.applyVersion('/callsets/search')
 
@@ -132,7 +134,7 @@ class TestSimulatedStack(unittest.TestCase):
         response = self.sendJsonPostRequest(
             path, request.toJsonString())
         self.assertEqual(200, response.status_code)
-        responseData = protocol.GASearchCallSetsResponse.fromJsonString(
+        responseData = protocol.SearchCallSetsResponse.fromJsonString(
             response.data)
         self.assertIsNone(responseData.nextPageToken)
         self.assertEqual([], responseData.callSets)
@@ -142,9 +144,9 @@ class TestSimulatedStack(unittest.TestCase):
         response = self.sendJsonPostRequest(
             path, request.toJsonString())
         self.assertEqual(200, response.status_code)
-        responseData = protocol.GASearchCallSetsResponse.fromJsonString(
+        responseData = protocol.SearchCallSetsResponse.fromJsonString(
             response.data)
-        self.assertTrue(protocol.GASearchCallSetsResponse.validate(
+        self.assertTrue(protocol.SearchCallSetsResponse.validate(
             responseData.toJsonDict()))
         self.assertNotEqual([], responseData.callSets)
         # TODO test the length of responseData.callSets equal to all callsets

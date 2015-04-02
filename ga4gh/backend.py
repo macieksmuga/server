@@ -102,72 +102,72 @@ class AbstractBackend(object):
 
     def searchReadGroupSets(self, request):
         """
-        Returns a GASearchReadGroupSetsResponse for the specified
-        GASearchReadGroupSetsRequest object.
+        Returns a SearchReadGroupSetsResponse for the specified
+        SearchReadGroupSetsRequest object.
         """
         return self.runSearchRequest(
-            request, protocol.GASearchReadGroupSetsRequest,
-            protocol.GASearchReadGroupSetsResponse,
+            request, protocol.SearchReadGroupSetsRequest,
+            protocol.SearchReadGroupSetsResponse,
             self.readGroupSetsGenerator)
 
     def searchReads(self, request):
         """
-        Returns a GASearchReadsResponse for the specified
-        GASearchReadsRequest object.
+        Returns a SearchReadsResponse for the specified
+        SearchReadsRequest object.
         """
         return self.runSearchRequest(
-            request, protocol.GASearchReadsRequest,
-            protocol.GASearchReadsResponse,
+            request, protocol.SearchReadsRequest,
+            protocol.SearchReadsResponse,
             self.readsGenerator)
 
     def searchReferenceSets(self, request):
         """
-        Returns a GASearchReferenceSetsResponse for the specified
-        GASearchReferenceSetsRequest object.
+        Returns a SearchReferenceSetsResponse for the specified
+        SearchReferenceSetsRequest object.
         """
         return self.runSearchRequest(
-            request, protocol.GASearchReferenceSetsRequest,
-            protocol.GASearchReferenceSetsResponse,
+            request, protocol.SearchReferenceSetsRequest,
+            protocol.SearchReferenceSetsResponse,
             self.referenceSetsGenerator)
 
     def searchReferences(self, request):
         """
-        Returns a GASearchReferencesResponse for the specified
-        GASearchReferencesRequest object.
+        Returns a SearchReferencesResponse for the specified
+        SearchReferencesRequest object.
         """
         return self.runSearchRequest(
-            request, protocol.GASearchReferencesRequest,
-            protocol.GASearchReferencesResponse,
+            request, protocol.SearchReferencesRequest,
+            protocol.SearchReferencesResponse,
             self.referencesGenerator)
 
     def searchVariantSets(self, request):
         """
-        Returns a GASearchVariantSetsResponse for the specified
-        GASearchVariantSetsRequest object.
+        Returns a SearchVariantSetsResponse for the specified
+        SearchVariantSetsRequest object.
         """
         return self.runSearchRequest(
-            request, protocol.GASearchVariantSetsRequest,
-            protocol.GASearchVariantSetsResponse,
+            request, protocol.SearchVariantSetsRequest,
+            protocol.SearchVariantSetsResponse,
             self.variantSetsGenerator)
 
     def searchVariants(self, request):
         """
-        Returns a GASearchVariantsResponse for the specified
-        GASearchVariantsRequest object.
+        Returns a SearchVariantsResponse for the specified
+        SearchVariantsRequest object.
         """
         return self.runSearchRequest(
-            request, protocol.GASearchVariantsRequest,
-            protocol.GASearchVariantsResponse,
+            request, protocol.SearchVariantsRequest,
+            protocol.SearchVariantsResponse,
             self.variantsGenerator)
 
     def searchCallSets(self, request):
         """
-        Returns a GASearchCallSetsResponse for the specified
-        GASearchCallSetsRequest Object.
+        Returns a SearchCallSetsResponse for the specified
+        SearchCallSetsRequest Object.
         """
         return self.runSearchRequest(
-            request, protocol.GASearchCallSetsRequest,
-            protocol.GASearchCallSetsResponse,
+            request, protocol.SearchCallSetsRequest,
+            protocol.SearchCallSetsResponse,
             self.callSetsGenerator)
 
     # Iterators over the data hieararchy
@@ -216,7 +216,7 @@ class AbstractBackend(object):
     def readsGenerator(self, request):
         # Local utility functions to save some typing
         def getPosition(readAlignment):
-            return readAlignment.alignment.position.position
+            return readAlignment.alignment.position.base.position
 
         def getEndPosition(readAlignment):
             return getPosition(readAlignment) + \
@@ -304,6 +304,29 @@ class AbstractBackend(object):
                 nextPageToken = "{}".format(nextVariant.start)
             yield variant, nextPageToken
             variant = nextVariant
+
+    def referencesGenerator(self, request):
+        """
+        Returns generator over the (reference, nextPageToken) pairs defined
+        by the request.
+        """
+        print("ReferenceSets: {}".format(self._referenceSetIds))
+        if request.referenceSetId is None:
+            # TODO: For now, grab the first reference set.
+            request.referenceSetId = self._referenceSetIds[0]
+        referenceSet = self._referenceSetIdMap[request.referenceSetId]
+        #TODO: Not dealing yet with page tokens
+        if request.pageToken is not None:
+            raise exceptions.BadPageTokenException()
+        iterator = referenceSet.getReferences()
+        reference = next(iterator, None)
+        while reference is not None:
+            nextReference = next(iterator, None)
+            nextPageToken = None
+            if nextReference is not None:
+                nextPageToken="0"  # TODO FIX THIS!
+            yield  reference, nextPageToken
+            reference = nextReference
 
     def callSetsGenerator(self, request):
         """
@@ -438,11 +461,11 @@ class FileSystemBackend(AbstractBackend):
         self._variantSetIds = sorted(self._variantSetIdMap.keys())
 
         # References
-        referenceSetDir = os.path.join(self._dataDir, "references")
+        referenceSetDir = os.path.join(self._dataDir, "graph_references")
         for referenceSetId in os.listdir(referenceSetDir):
             relativePath = os.path.join(referenceSetDir, referenceSetId)
             if os.path.isdir(relativePath):
-                referenceSet = references.ReferenceSet(
+                referenceSet = references.GraphReferenceSet(
                     referenceSetId, relativePath)
                 self._referenceSetIdMap[referenceSetId] = referenceSet
         self._referenceSetIds = sorted(self._referenceSetIdMap.keys())

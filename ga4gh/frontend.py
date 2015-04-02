@@ -285,7 +285,8 @@ def searchReferenceSets(version):
 
 @app.route('/<version>/references/search', methods=['POST'])
 def searchReferences(version):
-    raise exceptions.PathNotFoundException()
+    return handleFlaskPostRequest(
+        version, flask.request, app.backend.searchReferences)
 
 
 @app.route('/<version>/variantsets/search', methods=['POST', 'OPTIONS'])
@@ -298,6 +299,15 @@ def searchVariantSets(version):
 def searchVariants(version):
     return handleFlaskPostRequest(
         version, flask.request, app.backend.searchVariants)
+
+@app.route('/<version>/mode/<mode>', methods=['GET'])
+# FIXME Since there's no general GET response mechanism yet,
+# this is an utter and unforgivable hack. It may not even be correct,
+# as it's unclear to me what a boolean AVRO method should be returning
+# (0/1? "True"/"False"? something else entirely?)
+def sendsMode(version, mode):
+    responseString = 'true' if mode.lower() == 'graph' else 'false'
+    return flask.Response(responseString, status=200, mimetype=MIMETYPE)
 
 
 # The below methods ensure that JSON is returned for various errors

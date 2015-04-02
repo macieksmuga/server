@@ -81,27 +81,21 @@ class SchemaClass(object):
         """
         Returns the set of embedded types in this class.
         """
-        # TODO need to clarify how we operate on Unions here. The current
-        # code will break when we move to schema version 0.6 as we are
-        # no longer assured that the first element of the union is null.
-        # This would be a good opportunity to tidy this up.
         ret = []
         if isinstance(self.schema, avro.schema.RecordSchema):
             for field in self.getFields():
                 if isinstance(field.type, avro.schema.ArraySchema):
                     if isinstance(field.type.items, avro.schema.RecordSchema):
-                        ret.append((field.name, field.type.items.name))
+                        ret.append((field.name, [field.type.items.name]))
                 elif isinstance(field.type, avro.schema.RecordSchema):
-                    ret.append((field.name, field.type.name))
+                    ret.append((field.name, [field.type.name]))
                 elif isinstance(field.type, avro.schema.UnionSchema):
-                    t0 = field.type.schemas[0]
-                    t1 = field.type.schemas[1]
-                    if (isinstance(t0, avro.schema.PrimitiveSchema) and
-                            t0.type == "null"):
-                        if isinstance(t1, avro.schema.RecordSchema):
-                            ret.append((field.name, t1.name))
-                    else:
-                        raise Exception("Schema union assumptions violated")
+                    altTypes = []
+                    for memberType in field.type.schemas:
+                        if isinstance(memberType, avro.schema.RecordSchema):
+                            altTypes.append(memberType.name)
+                    if altTypes:
+                        ret.append((field.name,altTypes))
         return ret
 
     def formatSchema(self):
@@ -178,8 +172,9 @@ class SchemaClass(object):
             string = (" " * 8) + "embeddedTypes = {}"
         else:
             string = (" " * 8) + "embeddedTypes = {\n"
-            for fn, ft in self.getEmbeddedTypes():
-                string += (" " * 12) + "'{0}': {1},\n".format(fn, ft)
+            for fn, ftl in self.getEmbeddedTypes():
+                string += (" " * 12) + "'{0}': {1},\n".format(
+                    fn,', '.join(ftl))
             string += (" " * 8) + "}"
         print(string, file=outputFile)
         print(" " * 8 + "return fieldName in embeddedTypes", file=outputFile)

@@ -43,10 +43,10 @@ class ReferenceSetTest(datadriven.DataDrivenTest):
             self._idFastaFileMap[referenceId] = pysam.FastaFile(path)
 
     def getDataModelClass(self):
-        return references.ReferenceSet
+        return references.LinearReferenceSet
 
     def getProtocolClass(self):
-        return protocol.GAReferenceSet
+        return protocol.ReferenceSet
 
     def testNumReferences(self):
         references = list(self._gaObject.getReferences())
