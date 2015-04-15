@@ -406,8 +406,7 @@ def main():
         help="The file to output the protocol definitions to.")
     parser.add_argument(
         "version",
-        help="The tagged git release to process, e.g., v0.5.1. "
-        "Ignored if --inputSchemasDirectory is specified.")
+        help="The tagged git release to process, e.g., v0.5.1.")
     parser.add_argument(
         "--avro-tools-jar", "-j",
         help="The path to a local avro-tools.jar", default=None)

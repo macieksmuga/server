@@ -45,12 +45,12 @@ class AbstractReferenceSet(datamodel.DatamodelObject):
         SideGraph.getReference(), for example)
         """
         reference = protocol.Reference()
-        reference.id = self._id
         reference.sequenceId = mdict.get("sequenceId",self._id)
         reference.start = mdict.get("start", 0)
         reference.length = mdict.get("length",0)
         reference.md5checksum = mdict.get("md5checksum", "") 
         reference.name = mdict.get("name", "")
+        reference.id = "{}:{}".format(self._id,reference.name)
         reference.sourceAccessions = mdict.get("sourceAccessions", [])
         reference.isDerived = mdict.get("isDerived", False)
         reference.sourceDivergence = mdict.get("sourceDivergence", None)

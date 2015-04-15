@@ -96,6 +96,7 @@ class RequestFactory(object):
         request = protocol.SearchReferencesRequest()
         setCommaSeparatedAttribute(request, self.args, 'accessions')
         setCommaSeparatedAttribute(request, self.args, 'md5checksums')
+        request.referenceSetId = self.args.referenceSetName
         return request
 
     def createSearchReadGroupSetsRequest(self):
@@ -638,6 +639,11 @@ def addNameArgument(parser):
         "--name", default=None,
         help="The name to search over")
 
+def addReferenceSetNameArgument(parser):
+    parser.add_argument(
+        "--referenceSetName", default=None,
+        help="The reference set name to search over")
+
 
 def addClientGlobalOptions(parser):
     parser.add_argument('--verbose', '-v', action='count', default=0)
@@ -715,6 +721,7 @@ def addReferencesSearchParser(subparsers):
         help="Search for references")
     parser.set_defaults(runner=SearchReferencesRunner)
     addUrlArgument(parser)
+    addReferenceSetNameArgument(parser)
     addPageSizeArgument(parser)
     addAccessionsArgument(parser)
     addMd5ChecksumsArgument(parser)
