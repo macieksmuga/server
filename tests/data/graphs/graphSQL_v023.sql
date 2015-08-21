@@ -109,9 +109,9 @@ CREATE TABLE Allele (ID INTEGER PRIMARY KEY,
 CREATE TABLE AllelePathItem (alleleID INTEGER REFERENCES allele(ID), 
 	pathItemIndex INTEGER NOT NULL, -- zero-based index of this pathItem within the entire path
 	sequenceID INTEGER NOT NULL REFERENCES Sequence(ID), 
-	start INTEGER NOT NULL,
+	start INTEGER NOT NULL, -- start position on positive strand
 	length INTEGER NOT NULL, 
-	strandIsForward BOOLEAN NOT NULL,
+	strandIsForward BOOLEAN NOT NULL, -- if False, start at start position and read reverse complement leftwards.
 	PRIMARY KEY(alleleID, pathItemIndex));
 --
 CREATE TABLE AlleleCall (alleleID INTEGER NOT NULL REFERENCES allele(ID), 
