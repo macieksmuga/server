@@ -15,8 +15,15 @@ import pyfasta
 import sqlite3
 import re
 
-SIDEGRAPH_TRUE = 'TRUE'
-SIDEGRAPH_FALSE = 'FALSE'
+def sidegraphTrue(dbStr):
+    """
+    Returns False only on the strings "0", "", "F", "False" <- or any other capitalization
+    :param dbStr: value returned from boolean field of database
+    :return: boolean indicating if value was "meant" to be true or false
+    """
+    if type(dbStr) is not type(""):
+        return False
+    return not (dbStr == "" or dbStr == "0" or dbStr.upper() == "F" or dbStr.upper() == "FALSE")
 
 # Use the following regular expression to check
 # if findBadChars.search(input) is not None:
@@ -363,7 +370,7 @@ class SideGraph(object):
                 sequenceID=seqId,
                 start=unionStart,
                 length=unionEnd - unionStart+1,
-                strandIsForward=SIDEGRAPH_TRUE))
+                strandIsForward="TRUE"))
             # With segments adjusted, now explore joins...
             foundJoins = self.getJoins(seqId, segStart, segEnd)
             self._logger.debug("looking for joins on seqId {} {}-{}".format(
@@ -373,11 +380,11 @@ class SideGraph(object):
                 self._logger.debug("found join {}".format(foundJoin))
                 seq1 = foundJoin["side1SequenceID"]
                 pos1 = int(foundJoin["side1Position"])
-                fwd1 = foundJoin["side1StrandIsForward"] == SIDEGRAPH_TRUE
+                fwd1 = sidegraphTrue(foundJoin["side1StrandIsForward"])
 
                 seq2 = foundJoin["side2SequenceID"]
                 pos2 = int(foundJoin["side2Position"])
-                fwd2 = foundJoin["side2StrandIsForward"] == SIDEGRAPH_TRUE
+                fwd2 = sidegraphTrue(foundJoin["side2StrandIsForward"])
                 # make recursive calls to follow all joins
                 # encountered on the segment
                 if seq1 == seqId and segStart <= pos1 <= segEnd:

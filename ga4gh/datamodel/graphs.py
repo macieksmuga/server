@@ -30,7 +30,7 @@ def _makeSegment(segmentDict):
     ret = protocol.Segment()
     ret.length = segmentDict["length"]
     ret.start = protocol.Side()
-    if segmentDict["strandIsForward"] == sidegraph.SIDEGRAPH_TRUE:
+    if sidegraph.sidegraphTrue(segmentDict["strandIsForward"]):
         ret.start.strand = protocol.Strand.POS_STRAND
     else:
         ret.start.strand = protocol.Strand.NEG_STRAND
