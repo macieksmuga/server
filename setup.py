@@ -2,7 +2,7 @@ import re
 from ez_setup import use_setuptools
 from setuptools import setup
 
-MIN_SETUPTOOLS_VERSION = "5.4.1"
+MIN_SETUPTOOLS_VERSION = "3.6"
 use_setuptools(version=MIN_SETUPTOOLS_VERSION)
 
 

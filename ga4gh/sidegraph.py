@@ -21,9 +21,14 @@ def sidegraphTrue(dbStr):
     :param dbStr: value returned from boolean field of database
     :return: boolean indicating if value was "meant" to be true or false
     """
-    if type(dbStr) is not type(""):
+    if type(dbStr) is type(0):
+        return dbStr > 0
+    elif type(dbStr) is type(True):
+        return dbStr
+    elif type(dbStr) is type(""):
+        return not (dbStr == "" or dbStr == "0" or dbStr.upper() == "F" or dbStr.upper() == "FALSE")
+    else:
         return False
-    return not (dbStr == "" or dbStr == "0" or dbStr.upper() == "F" or dbStr.upper() == "FALSE")
 
 # Use the following regular expression to check
 # if findBadChars.search(input) is not None:
