@@ -305,7 +305,7 @@ class SideGraph(object):
         # could lead to new segments being added to the subgraph.
         exploredRadiusAt = dict()
 
-        def _getSubgraph(seqId, pos, rad, segments, joins, joinTaken=None):
+        def _getSubgraph(seqId, pos, rad, segments, joins, joinTaken=None, recursionDepth=0):
             """
             First three inputs describe current search "head":
               seqId - sequence id
@@ -323,11 +323,15 @@ class SideGraph(object):
             if rad <= 0:
                 self._logger.debug("radius reached zero")
                 return
-            if exploredRadiusAt.get((seqId, pos), 0) >= rad:
+            elif exploredRadiusAt.get((seqId, pos), 0) >= rad:
                 self._logger.debug("not exploring: exploredRadius > current radius.")
+                return
+            elif recursionDepth < 0:
+                self._logger.debug("Exceeded max recursion depth. Aborting.")
                 return
             else:
                 exploredRadiusAt[(seqId, pos)] = rad
+
             if joinTaken is not None and joinTaken not in joins:
                 joins.append(joinTaken)
 
@@ -392,12 +396,12 @@ class SideGraph(object):
                     # check 1st side of join
                     _getSubgraph(
                         seq2, pos2, rad - abs(pos1 - pos) - 1,
-                        segments, joins, foundJoin)
+                        segments, joins, foundJoin, recursionDepth - 1)
                 if seq2 == seqId and segStart <= pos2 <= segEnd:
                     # check 2nd side of join
                     _getSubgraph(
                         seq1, pos1, rad - abs(pos2 - pos) - 1,
-                        segments, joins, foundJoin)
+                        segments, joins, foundJoin, recursionDepth - 1)
             self._logger.debug("end {}:{}~{} via {}".format(
                 seqId, pos, rad, joinTaken))
 
@@ -405,6 +409,6 @@ class SideGraph(object):
         joins = []
         # recursively fill out subgraph walking forward
         _getSubgraph(str(seedSequenceId), seedPosition,
-                     radius, segments, joins, None)
+                     radius, segments, joins, None, recursionDepth=100)
 
         return (segments, joins)
