@@ -181,7 +181,9 @@ class Gff3Set(object):
             parentPart.children.add(feature)
 
     def finish(self):
-        "finish loading the set, constructing the tree"
+        """
+        finish loading the set, constructing the tree
+        """
         # features maybe disjoint
         for featureParts in self.byFeatureId.itervalues():
             for feature in featureParts:
