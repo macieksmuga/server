@@ -63,3 +63,40 @@ class TestGff3ParserOnTypicalFile(unittest.TestCase):
                                             "child feature not in set")
 
 
+
+
+class TestGff3ParserOnDiscontinuousFeatureFile(TestGff3ParserOnTypicalFile):
+    """
+    Data driven parser test on file with discontinuous features.
+    The tests here rely on specific data in the file being parsed.
+    """
+    def setUp(self):
+        self.testDataFile = "tests/data/datasets/dataset1/sequenceAnnotation/discontinuous.gff3"
+        self.gff3Parser = gff3.Gff3Parser(self.testDataFile)
+        self.gff3Data = self.gff3Parser.parse()
+
+
+    def testDiscontinuousFeature(self):
+        feat = self.gff3Data.byFeatureId['apidb|cds_MAL13P1.103-1']
+        self.assertEqual(len(feat), 10, "not all parts of discontinuous feature parsed")
+
+class TestGff3ParserOnSacCerFile(TestGff3ParserOnTypicalFile):
+    """
+    Data driven parser test on file from Saccharomyces cerevisiae S288C genome.
+    """
+    def setUp(self):
+        self.testDataFile = "tests/data/datasets/dataset1/sequenceAnnotation/sacCerTest.gff3"
+        self.gff3Parser = gff3.Gff3Parser(self.testDataFile)
+        self.gff3Data = self.gff3Parser.parse()
+
+
+
+class TestGff3ParserOnSpecialCasesFile(TestGff3ParserOnTypicalFile):
+    """
+    Data driven parser test on a GFF3 file representing edge cases.
+    """
+    def setUp(self):
+        self.testDataFile = "tests/data/datasets/dataset1/sequenceAnnotation/specialCasesTest.gff3"
+        self.gff3Parser = gff3.Gff3Parser(self.testDataFile)
+        self.gff3Data = self.gff3Parser.parse()
+
