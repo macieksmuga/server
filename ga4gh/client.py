@@ -223,6 +223,17 @@ class AbstractClient(object):
             "variantannotationsets", protocol.VariantAnnotationSet,
             variantAnnotationSetId)
 
+    def getFeatureSet(self, featureSetId):
+        """
+        Returns the FeatureSet with the specified ID from the server.
+
+        :param str featureSetId: The ID of the FeatureSet of interest.
+        :return: The FeatureSet of interest.
+        :rtype: :class:`ga4gh.protocol.FeatureSet`
+        """
+        return self._runGetRequest(
+            "featuresets", protocol.FeatureSet, featureSetId)
+
     def searchVariants(
             self, variantSetId, start=None, end=None, referenceName=None,
             callSetIds=None):
@@ -323,10 +334,10 @@ class AbstractClient(object):
     def searchVariantAnnotationSets(self, variantSetId):
         """
         Returns an iterator over the AnnotationSets fulfilling the specified
-        conditions from the specified Dataset.
+        conditions from the specified variant set.
 
-        :param str datasetId: The ID of the :class:`ga4gh.protocol.Dataset`
-            of interest.
+        :param str variantSetId: The ID of the
+            :class:`ga4gh.protocol.VariantSet` of interest.
         :return: An iterator over the :class:`ga4gh.protocol.AnnotationSet`
             objects defined by the query parameters.
         """
@@ -336,6 +347,22 @@ class AbstractClient(object):
         return self._runSearchRequest(
             request, "variantannotationsets",
             protocol.SearchVariantAnnotationSetsResponse)
+
+    def searchFeatureSets(self, datasetId):
+        """
+        Returns an iterator over the FeatureSets fulfilling the specified
+        conditions from the specified Dataset.
+
+        :param str datasetId: The ID of the
+            :class:`ga4gh.protocol.Dataset` of interest.
+        :return: An iterator over the :class:`ga4gh.protocol.FeatureSet`
+            objects defined by the query parameters.
+        """
+        request = protocol.SearchFeatureSetsRequest()
+        request.datasetId = datasetId
+        request.pageSize = self._pageSize
+        return self._runSearchRequest(
+                    request, "featuresets", protocol.SearchFeatureSetsResponse)
 
     def searchReferenceSets(
             self, accession=None, md5checksum=None, assemblyId=None):
@@ -547,6 +574,7 @@ class LocalClient(AbstractClient):
             "referencesets": self._backend.runGetReferenceSet,
             "references": self._backend.runGetReference,
             "variantsets": self._backend.runGetVariantSet,
+            "featuresets": self._backend.runGetFeatureSet,
             "variants": self._backend.runGetVariant,
             "readgroupsets": self._backend.runGetReadGroupSet,
             "readgroups": self._backend.runGetReadGroup,
@@ -558,6 +586,7 @@ class LocalClient(AbstractClient):
             "referencesets": self._backend.runSearchReferenceSets,
             "references": self._backend.runSearchReferences,
             "variantsets": self._backend.runSearchVariantSets,
+            "featuresets": self._backend.runSearchFeatureSets,
             "variants": self._backend.runSearchVariants,
             "readgroupsets": self._backend.runSearchReadGroupSets,
             "reads": self._backend.runSearchReads,

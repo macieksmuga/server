@@ -584,6 +584,16 @@ class Backend(object):
                 return self._noObjectGenerator()
             return self._singleObjectGenerator(callSet)
 
+    def featureSetsGenerator(self, request):
+        """
+        Returns a generator over the (featureSet, nextPageToken) pairs
+        defined by the specified request.
+        """
+        dataset = self.getDataRepository().getDataset(request.datasetId)
+        return self._topLevelObjectGenerator(
+            request, dataset.getNumFeatureSets(),
+            dataset.getFeatureSetByIndex)
+
     ###########################################################
     #
     # Public API methods. Each of these methods implements the
@@ -736,6 +746,15 @@ class Backend(object):
         variantSet = dataset.getVariantSet(id_)
         return self.runGetRequest(variantSet)
 
+    def runGetFeatureSet(self, id_):
+        """
+        Runs a getFeatureSet request for the specified ID.
+        """
+        compoundId = datamodel.FeatureSetCompoundId.parse(id_)
+        dataset = self.getDataRepository().getDataset(compoundId.datasetId)
+        featureSet = dataset.getFeatureSet(id_)
+        return self.runGetRequest(featureSet)
+
     def runGetDataset(self, id_):
         """
         Runs a getDataset request for the specified ID.
@@ -843,3 +862,27 @@ class Backend(object):
             request, protocol.SearchDatasetsRequest,
             protocol.SearchDatasetsResponse,
             self.datasetsGenerator)
+
+    def runSearchFeatureSets(self, request):
+        """
+        Returns a SearchFeatureSetsResponse for the specified
+        SearchFeatureSetsRequest object.
+        """
+        return self.runSearchRequest(
+            request, protocol.SearchFeatureSetsRequest,
+            protocol.SearchFeatureSetsResponse,
+            self.featureSetsGenerator)
+
+    def runSearchFeatures(self, request):
+        """
+        Returns a SearchFeaturesResponse for the specified
+        SearchFeaturesRequest object.
+
+        :param request: JSON string representing searchFeaturesRequest
+        :return: JSON string representing searchFeatureResponse
+        """
+        seqann = datamodel.sequenceAnnotations
+        return self.runSearchRequest(
+            request, protocol.SearchFeaturesRequest,
+            protocol.SearchFeaturesResponse,
+            seqann.Gff3DbFeatureSet.featureObjectGenerator)

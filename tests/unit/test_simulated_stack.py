@@ -161,6 +161,12 @@ class TestSimulatedStack(unittest.TestCase):
         self.assertEqual(
             gaReferenceSet.name, referenceSet.getLocalId())
 
+    def verifyFeatureSetsEqual(self, gaFeatureSet, featureSet):
+        dataset = featureSet.getParentContainer()
+        self.assertEqual(gaFeatureSet.id, featureSet.getId())
+        self.assertEqual(gaFeatureSet.datasetId, dataset.getId())
+        self.assertEqual(gaFeatureSet.name, featureSet.getLocalId())
+
     def verifyReferencesEqual(self, gaReference, reference):
         self.assertEqual(gaReference.id, reference.getId())
         self.assertEqual(gaReference.name, reference.getName())
@@ -338,6 +344,16 @@ class TestSimulatedStack(unittest.TestCase):
         self.verifySearchMethod(
             request, path, protocol.SearchReferenceSetsResponse, referenceSets,
             self.verifyReferenceSetsEqual)
+
+    def testFeatureSetsSearch(self):
+        path = '/featuresets/search'
+        for dataset in self.dataRepo.getDatasets():
+            featureSets = dataset.getFeatureSets()
+            request = protocol.SearchFeatureSetsRequest()
+            request.datasetId = dataset.getId()
+            self.verifySearchMethod(
+                request, path, protocol.SearchFeatureSetsResponse, featureSets,
+                self.verifyFeatureSetsEqual)
 
     def testReferencesSearch(self):
         path = '/references/search'

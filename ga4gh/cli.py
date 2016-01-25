@@ -204,6 +204,15 @@ class AbstractSearchRunner(FormattedOutputRunner):
             for variantSet in iterator:
                 yield variantSet
 
+    def getAllFeatureSets(self):
+        """
+        Returns all feature sets on the server.
+        """
+        for dataset in self.getAllDatasets():
+            iterator = self._client.searchFeatureSets(datasetId=dataset.id)
+            for featureSet in iterator:
+                yield featureSet
+
     def getAllReadGroupSets(self):
         """
         Returns all readgroup sets on the server.
@@ -321,6 +330,26 @@ class SearchVariantAnnotationSetsRunner(AbstractSearchRunner):
 
     def run(self):
         self._run(self._variantSetId)
+
+
+class SearchFeatureSetsRunner(AbstractSearchRunner):
+    """
+    Runner class for the featuresets/search method.
+    """
+    def __init__(self, args):
+        super(SearchFeatureSetsRunner, self).__init__(args)
+        self._datasetId = args.datasetId
+
+    def _run(self, datasetId):
+        iterator = self._client.searchFeatureSets(datasetId=datasetId)
+        self._output(iterator)
+
+    def run(self):
+        if self._datasetId is None:
+            for dataset in self.getAllDatasets():
+                self._run(dataset.id)
+        else:
+            self._run(self._datasetId)
 
 
 class SearchReadGroupSetsRunner(AbstractSearchRunner):
@@ -692,6 +721,12 @@ def addAnnotationSetIdArgument(parser):
         help="The annotation set id to search over")
 
 
+def addFeatureSetIdArgument(parser):
+    parser.add_argument(
+        "--featureSetId", "-V", default=None,
+        help="The feature set id to search over")
+
+
 def addReferenceNameArgument(parser):
     parser.add_argument(
         "--referenceName", "-r", default="1",
@@ -876,6 +911,19 @@ def addVariantSetsGetParser(subparsers):
     addGetArguments(parser)
 
 
+def addFeatureSetsSearchParser(subparsers):
+    parser = subparsers.add_parser(
+        "featuresets-search",
+        description="Search for featureSets",
+        help="Search for featureSets.")
+    parser.set_defaults(runner=SearchFeatureSetsRunner)
+    addOutputFormatArgument(parser)
+    addUrlArgument(parser)
+    addPageSizeArgument(parser)
+    addDatasetIdArgument(parser)
+    return parser
+
+
 def addReferenceSetsSearchParser(subparsers):
     parser = addSubparser(
         subparsers, "referencesets-search", "Search for referenceSets")
@@ -1036,6 +1084,7 @@ def getClientParser():
     addVariantAnnotationSearchParser(subparsers)
     addVariantAnnotationSetsSearchParser(subparsers)
     addVariantSetsGetParser(subparsers)
+    addFeatureSetsSearchParser(subparsers)
     addReferenceSetsSearchParser(subparsers)
     addReferencesSearchParser(subparsers)
     addReadGroupSetsSearchParser(subparsers)
