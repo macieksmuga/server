@@ -83,6 +83,10 @@ class Gff3DbBackend(sqliteBackend.SqliteBackedDataSource):
         :return: an array of dictionaries, each representing a feature's
         worth of data, keyed by the column names.
         """
+
+        # TODO: Recast this using sqlite's execute diction.
+        # Ex: cur.execute("insert into people values (?, ?)", (who, age))
+
         sql = "SELECT * FROM FEATURE "
         whereClauses = []
         for col in query:
@@ -172,6 +176,24 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
         self._dataRepository = dataRepository
         self._db = Gff3DbBackend(self._dbFilePath)
 
+    def _gaFeatureForFeatureDbRecord(self, feature):
+        """
+        :param feature: The DB Row representing a feature
+        :return: the corresponding GA4GH protocol.Feature object
+        """
+        gaFeature = protocol.Feature()
+        gaFeature.id = feature['id']
+        gaFeature.parentId = feature['parentId']
+        gaFeature.featureSetId = self._compoundId
+        gaFeature.referenceName = feature['reference_name']
+        gaFeature.start = feature['start']
+        gaFeature.end = feature['end']
+        gaFeature.featureType = feature['ontology_term']
+        gaFeature.attributes = json.loads(
+            feature['attributes']).toProtocolElement()
+        return gaFeature
+
+
     def featureObjectGenerator(self, request):
         """
         method passed to runSearchRequest to fulfill the request
@@ -190,6 +212,9 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
         ontologyTerms = request.ontologyTerms
 
         with self._db as dataSource:
+            # featuresCount is needed to ensure that once the
+            # request is fulfilled, no nextPageTokens past the
+            # end of the actual dataset range are returned.
             featuresCount = dataSource.countFeaturesSearchInDb(
                 parent_id=parentId, reference_name=referenceName,
                 start=start, end=end, ontology_terms=ontologyTerms)
@@ -199,18 +224,8 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
                 start=start, end=end, ontology_terms=ontologyTerms)
 
         nextPageToken = request.pageToken
-        for feature in featuresReturned:
-            gaFeature = protocol.Feature()
-            gaFeature.id = feature['id']
-            gaFeature.parentId = feature['parentId']
-            gaFeature.featureSetId = self._compoundId
-            gaFeature.referenceName = feature['reference_name']
-            gaFeature.start = feature['start']
-            gaFeature.end = feature['end']
-            gaFeature.featureType = feature['ontology_term']
-            gaFeature.attributes = json.loads(
-                feature['attributes']).toProtocolElement()
-
+        for featureRecord in featuresReturned:
+            gaFeature = self._gaFeatureForFeatureDbRecord(featureRecord)
             # pagination logic: None if last feature was returned,
             # else row number.
             if nextPageToken < featuresCount:
