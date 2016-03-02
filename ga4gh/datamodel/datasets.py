@@ -246,6 +246,7 @@ class FileSystemDataset(AbstractDataset):
     """
     variantsDirName = "variants"
     readsDirName = "reads"
+    featuresDirName = "sequenceAnnotations"
 
     def __init__(self, localId, dataDir, dataRepository):
         super(FileSystemDataset, self).__init__(localId)
@@ -277,7 +278,7 @@ class FileSystemDataset(AbstractDataset):
                     self, localId, bamPath, dataRepository)
                 self.addReadGroupSet(readGroupSet)
         # Sequence Annotations
-        featureSetDir = os.path.join(dataDir, "sequenceAnnotations")
+        featureSetDir = os.path.join(dataDir, self.featuresDirName)
         for filename in os.listdir(featureSetDir):
             if fnmatch.fnmatch(filename, '*.db'):
                 localId, _ = os.path.splitext(filename)

@@ -1496,6 +1496,29 @@ class RemoveVariantSetRunner(AbstractRepoDatasetCommandRunner):
         self.confirmRun(func, 'variant set {}'.format(self.variantSetName))
 
 
+class AddFeatureSetRunner(AbstractRepoDatasetFilepathCommandRunner):
+
+    def __init__(self, args):
+        super(AddFeatureSetRunner, self).__init__(args)
+
+    def run(self):
+        self.repoManager.addFeatureSet(
+            self.datasetName, self.filePath, self.moveMode)
+
+
+class RemoveFeatureSetRunner(AbstractRepoDatasetCommandRunner):
+
+    def __init__(self, args):
+        super(RemoveFeatureSetRunner, self).__init__(args)
+        self.featureSetName = args.featureSetName
+
+    def run(self):
+        def func():
+            self.repoManager.removeFeatureSet(
+                self.datasetName, self.featureSetName)
+        self.confirmRun(func, 'feature set {}'.format(self.featureSetName))
+
+
 def addRepoArgument(subparser):
     subparser.add_argument(
         "repoPath", help="the file path of the data repository")
@@ -1521,6 +1544,12 @@ def addReadGroupSetNameArgument(subparser):
 def addVariantSetNameArgument(subparser):
     subparser.add_argument(
         "variantSetName",
+        help="the name of the variant set")
+
+
+def addFeatureSetNameArgument(subparser):
+    subparser.add_argument(
+        "featureSetName",
         help="the name of the variant set")
 
 
@@ -1640,6 +1669,23 @@ def getRepoParser():
     addDatasetNameArgument(removeVariantSetParser)
     addVariantSetNameArgument(removeVariantSetParser)
     addForceArgument(removeVariantSetParser)
+
+    addFeatureSetParser = addSubparser(
+        subparsers, "add-featureset", "Add a feature set to the data repo")
+    addFeatureSetParser.set_defaults(runner=AddFeatureSetRunner)
+    addRepoArgument(addFeatureSetParser)
+    addDatasetNameArgument(addFeatureSetParser)
+    addFilePathArgument(addFeatureSetParser)
+    addMoveModeArgument(addFeatureSetParser)
+
+    removeFeatureSetParser = addSubparser(
+        subparsers, "remove-featureset",
+        "Remove a feature set from the repo")
+    removeFeatureSetParser.set_defaults(runner=RemoveFeatureSetRunner)
+    addRepoArgument(removeFeatureSetParser)
+    addDatasetNameArgument(removeFeatureSetParser)
+    addFeatureSetNameArgument(removeFeatureSetParser)
+    addForceArgument(removeFeatureSetParser)
 
     return parser
 
