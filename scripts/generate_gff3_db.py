@@ -17,7 +17,7 @@ import json
 import sqlite3
 
 import utils
-import ga4gh.gff3 as gff3
+import ga4gh.gff3Parser as gff3
 
 # TODO: Shift this to use the Gff3DbBackend class.
 
