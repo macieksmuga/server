@@ -193,7 +193,6 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
             feature['attributes']).toProtocolElement()
         return gaFeature
 
-
     def featureObjectGenerator(self, request):
         """
         method passed to runSearchRequest to fulfill the request
