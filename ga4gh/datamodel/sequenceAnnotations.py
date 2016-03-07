@@ -7,7 +7,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import json
-import ga4gh.exceptions
 
 import ga4gh.protocol as protocol
 import ga4gh.datamodel as datamodel
@@ -74,7 +73,8 @@ class Gff3DbBackend(sqliteBackend.SqliteBackedDataSource):
                                 referenceName=None, start=0, end=0,
                                 parentId=None, ontologyTerms=[]):
         """
-        Same parameters as searchFeaturesInDb, except without the pagetoken/size.
+        Same parameters as searchFeaturesInDb,
+        except without the pagetoken/size.
         """
         sql = ("SELECT COUNT(*) FROM FEATURE WHERE "
                "reference_name = ? "
