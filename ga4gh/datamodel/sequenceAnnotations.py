@@ -70,50 +70,46 @@ class Gff3DbBackend(sqliteBackend.SqliteBackedDataSource):
         self.featureColumnNames = [f[0] for f in _featureColumns]
         self.featureColumnTypes = [f[1] for f in _featureColumns]
 
-    def searchFeaturesInDb(self, pageToken=0, pageSize=None, **query):
+    def countFeaturesSearchInDb(self,
+                                referenceName=None, start=0, end=0,
+                                parentId=None, ontologyTerms=[]):
+        """
+        Same parameters as searchFeaturesInDb, except without the pagetoken/size.
+        """
+        sql = ("SELECT COUNT(*) FROM FEATURE WHERE "
+               "reference_name = ? "
+               "AND end > ? "  # compare this to query start
+               "AND start < ? "  # and this to query end
+               )
+        sql_args = (referenceName, start, end)
+        if parentId is not None:
+            sql += "AND parent_id = ? "
+            sql_args += (parentId,)
+        query = self._dbconn.execute(sql, sql_args)
+        return (query.fetchone())[0]
+
+    def searchFeaturesInDb(self, pageToken=0, pageSize=None,
+                           referenceName=None, start=0, end=0,
+                           parentId=None, ontologyTerms=[]):
         """
         :param pageToken: int representing first record to return
         :param pageSize: int representing number of records to return
-        :param query: dictionary of query terms and values (as strings)
-        to translate into 'WHERE' clauses.
-        Keys must exactly match entries in self.featureColumnNames,
-        and must be converted according to their featureColumnType.
-        All text values must first be checked for illegal characters,
-        and for overflow, to prevent SQL injection attacks.
-        :return: an array of dictionaries, each representing a feature's
-        worth of data, keyed by the column names.
+        :param referenceName: string representing reference name, ex 'chr1'
+        :param start: int position on reference to start search
+        :param end: int position on reference to end search >= start
+        :param parentId: string restrict search by id of parent node.
         """
-
-        # TODO: Recast this using sqlite's execute diction.
-        # Ex: cur.execute("insert into people values (?, ?)", (who, age))
-
-        sql = "SELECT * FROM FEATURE "
-        whereClauses = []
-        for col in query:
-            if col in self.featureColumnNames:
-                colIdx = self.featureColumnNames.index(col)
-                colType = self.featureColumnTypes[colIdx]
-                colVal = query[col]
-                # simple input sanity check
-                if colType is "INT":
-                    colVal = int(colVal)
-                    # start and end need to be handled properly for ranges
-                    # featureStart < queryEnd and featureEnd > queryStart
-                    if col is "start":
-                        whereClauses.append("end > {}".format(colVal))
-                    elif col is "end":
-                        whereClauses.append("start < {}".format(colVal))
-                    else:
-                        whereClauses.append("{} = {}".format(col, colVal))
-                else:  # TEXT of some sort
-                    if "'" in colVal:
-                        raise(ga4gh.exceptions.BadRequestException)
-                    whereClauses.append("{} = '{}'".format(col, colVal))
-        if len(whereClauses) > 0:
-            sql += "WHERE {} ".format(" AND ".join(whereClauses))
-        sql += "ORDER BY start, id "
+        sql = ("SELECT * FROM FEATURE WHERE "
+               "reference_name = ? "
+               "AND end > ? "  # compare this to query start
+               "AND start < ? "  # and this to query end
+               )
+        sql_args = (referenceName, start, end)
+        if parentId is not None:
+            sql += "AND parent_id = ? "
+            sql_args += (parentId,)
         sql += sqliteBackend.limitsSql(pageToken, pageSize)
-        query = self._dbconn.execute(sql)
+        query = self._dbconn.execute(sql, sql_args)
         return sqliteBackend.sqliteRows2dicts(query.fetchall())
 
 
@@ -202,12 +198,8 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
         # parse out the various query parameters from the request.
         parentId = request.parentId
         referenceName = request.referenceName
-        start = 0
-        if request.get(start):
-            start = int(request.start)
-        end = None
-        if request.get(end):
-            end = int(request.end)
+        start = int(request.start)
+        end = int(request.end)
         ontologyTerms = request.ontologyTerms
 
         with self._db as dataSource:
@@ -215,12 +207,12 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
             # request is fulfilled, no nextPageTokens past the
             # end of the actual dataset range are returned.
             featuresCount = dataSource.countFeaturesSearchInDb(
-                parent_id=parentId, reference_name=referenceName,
-                start=start, end=end, ontology_terms=ontologyTerms)
+                parentId=parentId, referenceName=referenceName,
+                start=start, end=end, ontologyTerms=ontologyTerms)
             featuresReturned = dataSource.searchFeaturesInDb(
                 request.pageToken, request.pageSize,
-                parent_id=parentId, reference_name=referenceName,
-                start=start, end=end, ontology_terms=ontologyTerms)
+                parentId=parentId, referenceName=referenceName,
+                start=start, end=end, ontologyTerms=ontologyTerms)
 
         nextPageToken = request.pageToken
         for featureRecord in featuresReturned:

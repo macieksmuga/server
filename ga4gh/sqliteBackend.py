@@ -29,6 +29,8 @@ def limitsSql(pageToken=0, pageSize=None):
     int or string containing an int
     :return: SQL 'limit' statement string to append to query.
     """
+    if pageToken is None:
+        pageToken = 0
     if pageSize is not None or pageToken > 0:
         start = int(pageToken)
         end = start + int(pageSize)

@@ -574,7 +574,7 @@ class Backend(object):
         compoundId = datamodel.FeatureSetCompoundId.parse(request.featureSetId)
         dataset = self.getDataRepository().getDataset(compoundId.datasetId)
         featureSet = dataset.getFeatureSet(compoundId.featureSetId)
-        return featureSet.featureObjectsGenerator(request)
+        return featureSet.featureObjectGenerator(request)
 
     def callSetsGenerator(self, request):
         """
@@ -895,4 +895,4 @@ class Backend(object):
         return self.runSearchRequest(
             request, protocol.SearchFeaturesRequest,
             protocol.SearchFeaturesResponse,
-            self.featureSetsGenerator)
+            self.featuresGenerator)
