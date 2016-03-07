@@ -541,7 +541,7 @@ def searchFeatureSets():
 
 @DisplayedRoute('/features/search', postMethod=True)
 def searchFeatures():
-    return handleFlaskGetRequest(
+    return handleFlaskPostRequest(
         flask.request, app.backend.runSearchFeatures)
 
 

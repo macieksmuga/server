@@ -565,6 +565,17 @@ class Backend(object):
             request, variantAnnotationSet)
         return intervalIterator
 
+    def featuresGenerator(self, request):
+        """
+        Because, I guess, a generator is needed here?
+        :param request: the original web request, passed merrily along
+        :return: an iterator over the result set?
+        """
+        compoundId = datamodel.FeatureSetCompoundId.parse(request.featureSetId)
+        dataset = self.getDataRepository().getDataset(compoundId.datasetId)
+        featureSet = dataset.getFeatureSet(compoundId.featureSetId)
+        return featureSet.featureObjectsGenerator(request)
+
     def callSetsGenerator(self, request):
         """
         Returns a generator over the (callSet, nextPageToken) pairs defined
@@ -881,8 +892,7 @@ class Backend(object):
         :param request: JSON string representing searchFeaturesRequest
         :return: JSON string representing searchFeatureResponse
         """
-        seqann = datamodel.sequenceAnnotations
         return self.runSearchRequest(
             request, protocol.SearchFeaturesRequest,
             protocol.SearchFeaturesResponse,
-            seqann.Gff3DbFeatureSet.featureObjectGenerator)
+            self.featureSetsGenerator)
