@@ -567,9 +567,8 @@ class Backend(object):
 
     def featuresGenerator(self, request):
         """
-        Because, I guess, a generator is needed here?
-        :param request: the original web request, passed merrily along
-        :return: an iterator over the result set?
+        :param request: JSON string - the original web request
+        :return: an iterator over the result set/nextPageToken pairs
         """
         compoundId = datamodel.FeatureSetCompoundId.parse(request.featureSetId)
         dataset = self.getDataRepository().getDataset(compoundId.datasetId)
