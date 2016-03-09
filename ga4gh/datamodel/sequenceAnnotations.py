@@ -185,8 +185,8 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
             gaFeature.parentId = None
         gaFeature.featureSetId = self.getId()
         gaFeature.referenceName = feature['reference_name']
-        gaFeature.start = feature['start']
-        gaFeature.end = feature['end']
+        gaFeature.start = int(feature['start'])
+        gaFeature.end = int(feature['end'])
         gaFeature.featureType = feature['ontology_term']
         gaFeature.attributes = json.loads(
             feature['attributes'])
