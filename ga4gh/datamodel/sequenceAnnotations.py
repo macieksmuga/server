@@ -179,14 +179,17 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
         """
         gaFeature = protocol.Feature()
         gaFeature.id = feature['id']
-        gaFeature.parentId = feature['parentId']
-        gaFeature.featureSetId = self._compoundId
+        if feature.get('parentId'):
+            gaFeature.parentId = feature['parentId']
+        else:
+            gaFeature.parentId = None
+        gaFeature.featureSetId = self.getId()
         gaFeature.referenceName = feature['reference_name']
         gaFeature.start = feature['start']
         gaFeature.end = feature['end']
         gaFeature.featureType = feature['ontology_term']
         gaFeature.attributes = json.loads(
-            feature['attributes']).toProtocolElement()
+            feature['attributes'])
         return gaFeature
 
     def featureObjectGenerator(self, request):
@@ -219,7 +222,7 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
             gaFeature = self._gaFeatureForFeatureDbRecord(featureRecord)
             # pagination logic: None if last feature was returned,
             # else row number.
-            if nextPageToken < featuresCount:
+            if (nextPageToken is not None) and (nextPageToken < featuresCount):
                 nextPageToken += 1
             else:
                 nextPageToken = None

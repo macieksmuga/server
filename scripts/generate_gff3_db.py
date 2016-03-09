@@ -95,6 +95,7 @@ class Gff32Db(object):
 
             # print(rowInsertSQL)  #DEBUG
             dbcur.execute(rowInsertSQL)
+            dbconn.commit()
         dbcur.close()
         dbconn.close()
         print("Done.", file=sys.stderr)
