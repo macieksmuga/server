@@ -18,7 +18,7 @@ def sqliteRows2dicts(sqliteRows):
     :param sqliteRows: array of rows returned from DB call
     :return:  array of dicts, keyed by the column names.
     """
-    return map(lambda r: dict(zip(r.keys(), map(str, r))), sqliteRows)
+    return map(lambda r: dict(zip(r.keys(), r)), sqliteRows)
 
 
 def limitsSql(pageToken=0, pageSize=None):
