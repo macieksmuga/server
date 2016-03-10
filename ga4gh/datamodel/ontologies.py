@@ -37,6 +37,7 @@ class FileSystemOntology(object):
         term = protocol.OntologyTerm()
         term.term = name
         term.id = self.getId(name)
+        # TODO set source name smarter
         term.sourceName = self._sourceName
         # TODO how do we get the right version?
         term.sourceVersion = None
