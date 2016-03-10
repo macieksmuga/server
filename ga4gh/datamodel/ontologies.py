@@ -8,7 +8,6 @@ from __future__ import unicode_literals
 import fnmatch
 import os
 import ga4gh.protocol as protocol
-import ga4gh.datamodel as datamodel
 
 
 class FileSystemOntology(object):
