@@ -34,7 +34,26 @@ class FileSystemOntology(object):
     def getName(self, id_):
         return self._nameIdMap[id_]
 
+    def getGaTermByName(self, name):
+        term = protocol.OntologyTerm()
+        term.term = name
+        term.id = self.getId(name)
+        term.sourceName = self._sourceName
+        # TODO how do we get the right version?
+        term.sourceVersion = None
+        return term
+
+    def getGaTermById(self, id_):
+        term = protocol.OntologyTerm()
+        term.term = self.getName(id_)
+        term.id = id_
+        term.sourceName = self._sourceName
+        # TODO how do we get the right version?
+        term.sourceVersion = None
+        return term
+
     def readOntology(self, filename):
+        self._sourceName = filename
         with open(filename) as f:
             for line in f:
                 # File format: id \t name
@@ -74,84 +93,3 @@ class FileSystemOntologies(object):
                 ontology = FileSystemOntology()
                 ontology.readOntology(path)
                 self.add(ontologyName, ontology)
-
-
-class OntologyTermSet(datamodel.DatamodelObject):
-    """
-    A set of related ontology terms.
-    """
-    def __init__(self, ontologySource):
-        self._ontologySource = ontologySource
-        self._ontologyTermIdMap = dict()
-        self._ontologyTermNameMap = dict()
-
-    def add(self, ontologyTerm):
-        """
-        add an ontology term to the object
-        """
-        if ontologyTerm.id in self._ontologyTermIdMap:
-            raise ValueError(
-                "OntologyTerm id already exists: {}".format(str(ontologyTerm)))
-        self._ontologyTermIdMap[ontologyTerm.id] = ontologyTerm
-        if ontologyTerm.name is not None:
-            if ontologyTerm.name in self._ontologyTermNameMap:
-                raise ValueError(
-                    "OntologyTerm already exists: {}".format(str(
-                                                             ontologyTerm)))
-
-    def create(self, id, name):
-        """
-        create a new ontology term
-        """
-        self.add(OntologyTerm(self._ontologySource, id, name))
-
-
-class OntologyTerm(datamodel.DatamodelObject):
-    """
-    A specific ontology term.
-    """
-    def __init__(self, ontologySource, id, name):
-        self._ontologySource = ontologySource
-        self._id = id
-        self._name = name
-
-    def __str__(self):
-        return "{}/{}/{}".format(self.ontologySource, self.id, str(self.name))
-
-    def toProtocolElement(self):
-        """
-        Returns the representation of this OntologyTerm as the corresponding
-        ProtocolElement.
-        """
-        gaOntologyTerm = protocol.OntologyTerm()
-        gaOntologyTerm.ontologySource = self._ontologySource
-        gaOntologyTerm.id = self._id
-        gaOntologyTerm.name = self._name
-        return gaOntologyTerm
-
-
-class SequenceOntologyTermSet(OntologyTermSet):
-    # TODO: tmp hack to encode the sequence ontology terms used by the BRCA
-    # gene sets
-    def __init__(self):
-        super(SequenceOntologyTermSet, self).__init__(
-            "http://www.sequenceontology.org/")
-        self.create("SO:0000316", "CDS")
-        self.create("SO:0000147", "exon")
-        self.create("SO:0000704", "gene")
-        self.create("SO:0000318", "start_codon")
-        self.create("SO:0000319", "stop_codon")
-        self.create("SO:0000710", "stop_codon_redefined_as_selenocysteine")
-        self.create("SO:0000673", "transcript")
-        self.create("SO:0000203", "UTR")
-
-    _singleton = None
-
-    @staticmethod
-    def singleton():
-        """
-        obtain singleton instances of this class
-        """
-        if SequenceOntologyTermSet._singleton is None:
-            SequenceOntologyTermSet._singleton = SequenceOntologyTermSet()
-        return SequenceOntologyTermSet._singleton
