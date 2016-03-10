@@ -179,8 +179,8 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
         """
         gaFeature = protocol.Feature()
         gaFeature.id = feature['id']
-        if feature.get('parentId'):
-            gaFeature.parentId = feature['parentId']
+        if feature.get('parent_id'):
+            gaFeature.parentId = feature['parent_id']
         else:
             gaFeature.parentId = None
         gaFeature.featureSetId = self.getId()
