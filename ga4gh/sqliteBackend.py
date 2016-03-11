@@ -15,10 +15,19 @@ def sqliteRows2dicts(sqliteRows):
     """
     unpacks sqlite rows as returned by fetchall
     into an array of simple dicts.
-    :param sqliteRows: array of rows returned from DB call
+    :param sqliteRows: array of rows returned from fetchall DB call
     :return:  array of dicts, keyed by the column names.
     """
     return map(lambda r: dict(zip(r.keys(), r)), sqliteRows)
+
+
+def sqliteRow2Dict(sqliteRow):
+    """
+    As above, but for a single row
+    :param sqliteRow: single row returned from fetchone DB call
+    :return: dictionary corresponding to this row
+    """
+    return dict(zip(sqliteRow.keys(), sqliteRow))
 
 
 def limitsSql(pageToken=0, pageSize=None):

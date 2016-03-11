@@ -290,7 +290,7 @@ class FeatureCompoundId(FeatureSetCompoundId):
     """
     The compound id class for a feature
     """
-    fields = FeatureSetCompoundId.fields + ['id']
+    fields = FeatureSetCompoundId.fields + ['featureId']
 
 
 class ReadGroupSetCompoundId(DatasetCompoundId):

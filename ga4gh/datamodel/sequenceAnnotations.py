@@ -98,6 +98,7 @@ class Gff3DbBackend(sqliteBackend.SqliteBackedDataSource):
         :param start: int position on reference to start search
         :param end: int position on reference to end search >= start
         :param parentId: string restrict search by id of parent node.
+        :return an array of dictionaries, representing the returned data.
         """
         sql = ("SELECT * FROM FEATURE WHERE "
                "reference_name = ? "
@@ -111,6 +112,38 @@ class Gff3DbBackend(sqliteBackend.SqliteBackedDataSource):
         sql += sqliteBackend.limitsSql(pageToken, pageSize)
         query = self._dbconn.execute(sql, sql_args)
         return sqliteBackend.sqliteRows2dicts(query.fetchall())
+
+    def getFeatureById(self, featureId):
+        """
+        :param featureId: the FeatureID as found in GFF3 records
+        :return: dictionary representing a feature object,
+            or None if no match is found.
+        """
+        sql = ("SELECT * FROM FEATURE WHERE id = ?")
+        query = self._dbconn.execute(sql, (featureId,))
+        return sqliteBackend.sqliteRow2Dict(query.fetchone())
+
+
+# Problem: FeatureIds from GFF3 often contain colons,
+# and the CompoundId mechanism reserves colons for its special separator
+# character. Thus the following pair of functions that mangles and
+# de-mangles featureId's to allow them to work in compoundIds.
+def _decolonize(featureId):
+    """
+    Replaces colons in input with CompoundId-safe character
+    :param featureId: string potentially with colons in it
+    :return: same string with colons replaced with safe character
+    """
+    return featureId.replace(':', ';')
+
+
+def _recolonize(mangled_featureId):
+    """
+    Replaces CompoundId-safe character in input with colons
+    :param featureId: string potentially with replacement character
+    :return: same string with colons in place.
+    """
+    return mangled_featureId.replace(';', ':')
 
 
 class AbstractFeatureSet(datamodel.DatamodelObject):
@@ -141,14 +174,14 @@ class AbstractFeatureSet(datamodel.DatamodelObject):
         gaFeatureSet.attributes = self._attributes
         return gaFeatureSet
 
-    def getFeatureId(self, gaFeature):
+    def getCompoundIdForFeatureId(self, featureId):
         """
-        :param gaFeature: protocol.Feature object
-        :return: string representing ID for the specified protocol
+        :param featureId: string feature ID as reported in GFF3
+        :return: string representing ID for the specified GA4GH protocol
             Feature object in this FeatureSet.
         """
-        compoundId = datamodel.FeatueCompoundId(
-            self.getCompoundId(), gaFeature.id)
+        compoundId = datamodel.FeatureCompoundId(
+            self.getCompoundId(), _decolonize(featureId))
         return str(compoundId)
 
 
@@ -172,22 +205,36 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
         self._dataRepository = dataRepository
         self._db = Gff3DbBackend(self._dbFilePath)
 
+    def getFeature(self, compoundId):
+        featureId = _recolonize(compoundId.featureId)
+        with self._db as dataSource:
+            featureReturned = dataSource.getFeatureById(featureId)
+
+        if featureReturned is not None:
+            gaFeature = self._gaFeatureForFeatureDbRecord(featureReturned)
+            return gaFeature
+        else:
+            return None
+
     def _gaFeatureForFeatureDbRecord(self, feature):
         """
         :param feature: The DB Row representing a feature
         :return: the corresponding GA4GH protocol.Feature object
         """
         gaFeature = protocol.Feature()
-        gaFeature.id = feature['id']
+        gaFeature.id = self.getCompoundIdForFeatureId(feature['id'])
         if feature.get('parent_id'):
-            gaFeature.parentId = feature['parent_id']
+            gaFeature.parentId = self.getCompoundIdForFeatureId(
+                    feature['parent_id'])
         else:
             gaFeature.parentId = None
         gaFeature.featureSetId = self.getId()
         gaFeature.referenceName = feature['reference_name']
         gaFeature.start = int(feature['start'])
         gaFeature.end = int(feature['end'])
-        gaFeature.childIds = json.loads(feature['child_ids'])
+        gaFeature.childIds = map(
+                self.getCompoundIdForFeatureId,
+                json.loads(feature['child_ids']))
         gaFeature.featureType = feature['ontology_term']
         gaFeature.attributes = json.loads(
             feature['attributes'])

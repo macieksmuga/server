@@ -711,6 +711,18 @@ class Backend(object):
         jsonString = gaVariant.toJsonString()
         return jsonString
 
+    def runGetFeature(self, id_):
+        """
+        :param id_: the compoundID of the feature being requested
+        :return: JSON string of the corresponding feature object.
+        """
+        compoundId = datamodel.FeatureCompoundId.parse(id_)
+        dataset = self.getDataRepository().getDataset(compoundId.datasetId)
+        featureSet = dataset.getFeatureSet(compoundId.featureSetId)
+        gaFeature = featureSet.getFeature(compoundId)
+        jsonString = gaFeature.toJsonString()
+        return jsonString
+
     def runGetReadGroupSet(self, id_):
         """
         Returns a readGroupSet with the given id_

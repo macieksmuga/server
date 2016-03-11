@@ -28,6 +28,6 @@ class TestAbstractFeatureSet(unittest.TestCase):
 
     def testGetFeatureIdFailsWithBadInput(self):
         self.assertRaises(AttributeError,
-                          self._featureSet.getFeatureId, None)
+                          self._featureSet.getCompoundIdForFeatureId, None)
         self.assertRaises(AttributeError,
-                          self._featureSet.getFeatureId, "badId")
+                          self._featureSet.getCompoundIdForFeatureId, "badId")
