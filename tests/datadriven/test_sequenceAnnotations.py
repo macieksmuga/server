@@ -38,7 +38,6 @@ class FeatureSetDataValidityTests(datadriven.DataDrivenTest):
         self._gff3Records = []
         super(FeatureSetDataValidityTests, self).__init__(localId, dataPath)
 
-
     def getProtocolClass(self):
         return protocol.FeatureSet
 
