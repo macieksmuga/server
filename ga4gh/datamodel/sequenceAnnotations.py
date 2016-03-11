@@ -200,7 +200,8 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
     def __init__(self, parentContainer, localId, filePath, dataRepository):
         super(Gff3DbFeatureSet, self).__init__(
             parentContainer, localId, None)
-
+        self._sequenceOntology = dataRepository.getOntology(
+            'sequence_ontology')
         self._dbFilePath = filePath  # the full file path of the
         self._dataRepository = dataRepository
         self._db = Gff3DbBackend(self._dbFilePath)
@@ -235,7 +236,8 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
         gaFeature.childIds = map(
                 self.getCompoundIdForFeatureId,
                 json.loads(feature['child_ids']))
-        gaFeature.featureType = feature['ontology_term']
+        gaFeature.featureType = \
+            self._sequenceOntology.getGaTermByName(feature['ontology_term'])
         gaFeature.attributes = json.loads(
             feature['attributes'])
         return gaFeature

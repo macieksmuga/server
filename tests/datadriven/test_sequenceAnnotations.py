@@ -32,14 +32,16 @@ class FeatureSetDataValidityTests(datadriven.DataDrivenTest):
         :return:
         """
         self._dataset = datasets.AbstractDataset("ds")
-        super(FeatureSetDataValidityTests, self).__init__(localId, dataPath)
         self._backend = backend.Backend(datarepo.AbstractDataRepository())
+        self._datarepo = datarepo.FileSystemDataRepository("tests/data")
         self._referenceSet = None
         self._gff3Records = []
+        super(FeatureSetDataValidityTests, self).__init__(localId, dataPath)
+
 
     def getProtocolClass(self):
         return protocol.FeatureSet
 
     def getDataModelInstance(self, localId, dataPath):
         return sequenceAnnotations.Gff3DbFeatureSet(
-            self._dataset, localId, dataPath, None)
+            self._dataset, localId, dataPath, self._datarepo)
