@@ -29,5 +29,3 @@ class TestAbstractFeatureSet(unittest.TestCase):
     def testGetFeatureIdFailsWithBadInput(self):
         self.assertRaises(AttributeError,
                           self._featureSet.getCompoundIdForFeatureId, None)
-        self.assertRaises(AttributeError,
-                          self._featureSet.getCompoundIdForFeatureId, "badId")
