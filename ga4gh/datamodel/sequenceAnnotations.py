@@ -267,14 +267,17 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
                 parentId=parentId, referenceName=referenceName,
                 start=start, end=end, ontologyTerms=ontologyTerms)
 
-        nextPageToken = request.pageToken
+        # pagination logic: None if last feature was returned,
+        # else 1 + row number being returned (starting at row 0).
+        pageToken = request.pageToken
+        if pageToken is not None:
+            nextPageToken = int(pageToken)
+        else:
+            nextPageToken = 0
         for featureRecord in featuresReturned:
             gaFeature = self._gaFeatureForFeatureDbRecord(featureRecord)
-            # pagination logic: None if last feature was returned,
-            # else row number.
-            if (nextPageToken is not None) and (nextPageToken < featuresCount):
+            if nextPageToken < featuresCount - 1:
                 nextPageToken += 1
             else:
                 nextPageToken = None
-
             yield gaFeature, nextPageToken
