@@ -85,6 +85,11 @@ class Gff3DbBackend(sqliteBackend.SqliteBackedDataSource):
         if parentId is not None:
             sql += "AND parent_id = ? "
             sql_args += (parentId,)
+        if ontologyTerms is not None and len(ontologyTerms) > 0:
+            sql += "AND ontology_term IN ("
+            sql += ", ".join(["?", ] * len(ontologyTerms))
+            sql += ") "
+            sql_args += tuple(ontologyTerms)
         query = self._dbconn.execute(sql, sql_args)
         return (query.fetchone())[0]
 
@@ -109,6 +114,11 @@ class Gff3DbBackend(sqliteBackend.SqliteBackedDataSource):
         if parentId is not None:
             sql += "AND parent_id = ? "
             sql_args += (parentId,)
+        if ontologyTerms is not None and len(ontologyTerms) > 0:
+            sql += "AND ontology_term IN ("
+            sql += ", ".join(["?", ] * len(ontologyTerms))
+            sql += ") "
+            sql_args += tuple(ontologyTerms)
         sql += sqliteBackend.limitsSql(pageToken, pageSize)
         query = self._dbconn.execute(sql, sql_args)
         return sqliteBackend.sqliteRows2dicts(query.fetchall())
@@ -202,7 +212,7 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
             parentContainer, localId, None)
         self._sequenceOntology = dataRepository.getOntology(
             'sequence_ontology')
-        self._dbFilePath = filePath  # the full file path of the
+        self._dbFilePath = filePath
         self._dataRepository = dataRepository
         self._db = Gff3DbBackend(self._dbFilePath)
 
@@ -233,6 +243,7 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
         gaFeature.referenceName = feature['reference_name']
         gaFeature.start = int(feature['start'])
         gaFeature.end = int(feature['end'])
+        print(feature['child_ids'])  # DEBUG
         gaFeature.childIds = map(
                 self.getCompoundIdForFeatureId,
                 json.loads(feature['child_ids']))
@@ -242,34 +253,41 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
             feature['attributes'])
         return gaFeature
 
-    def featureObjectGenerator(self, request):
+    def featureObjectGenerator(self, referenceName, start, end,
+                               pageToken, pageSize,
+                               ontologyTerms=[], parentId=None):
         """
         method passed to runSearchRequest to fulfill the request
-        :param request: protocol.FeatureSearchRequest
+        :param str referenceName: name of reference (ex: "chr1")
+        :param start: castable to int, start position on reference
+        :param end: castable to int, end position on reference
+        :param pageToken: none or castable to int
+        :param pageSize: none or castable to int
+        :param ontologyTerms: array of str
+        :param parentId: none or featureID of parent
         :return: yields a protocol.Feature at a time
         """
         # parse out the various query parameters from the request.
-        parentId = request.parentId
-        referenceName = request.referenceName
-        start = int(request.start)
-        end = int(request.end)
-        ontologyTerms = request.ontologyTerms
+        start = int(start)
+        end = int(end)
 
         with self._db as dataSource:
             # featuresCount is needed to ensure that once the
             # request is fulfilled, no nextPageTokens past the
             # end of the actual dataset range are returned.
             featuresCount = dataSource.countFeaturesSearchInDb(
-                parentId=parentId, referenceName=referenceName,
-                start=start, end=end, ontologyTerms=ontologyTerms)
+                referenceName=referenceName,
+                start=start, end=end,
+                parentId=parentId, ontologyTerms=ontologyTerms)
             featuresReturned = dataSource.searchFeaturesInDb(
-                request.pageToken, request.pageSize,
-                parentId=parentId, referenceName=referenceName,
-                start=start, end=end, ontologyTerms=ontologyTerms)
+                pageToken, pageSize,
+                referenceName=referenceName,
+                start=start, end=end,
+                parentId=parentId, ontologyTerms=ontologyTerms)
 
         # pagination logic: None if last feature was returned,
         # else 1 + row number being returned (starting at row 0).
-        pageToken = request.pageToken
+        pageToken = pageToken
         if pageToken is not None:
             nextPageToken = int(pageToken)
         else:

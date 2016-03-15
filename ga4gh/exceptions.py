@@ -338,10 +338,17 @@ class DatasetNameNotFoundException(NotFoundException):
         self.message = "Dataset with name '{0}' not found".format(name)
 
 
-class FeatureGroupNotFoundException(NotFoundException):
+class FeatureSetNotFoundException(NotFoundException):
     def __init__(self, name):
         self.message = (
-            "FeatureGroup with name '{0}' not found".format(name))
+            "FeatureSet with name '{0}' not found".format(name))
+
+
+class ParentIncompatibleWithFeatureSet(BadRequestException):
+    def __init__(self):
+        self.message = (
+            "Parent feature incompatible with requested Feature Set."
+        )
 
 
 class SequenceAnnotationNotFoundException(NotFoundException):

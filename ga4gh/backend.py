@@ -570,10 +570,38 @@ class Backend(object):
         :param request: JSON string - the original web request
         :return: an iterator over the result set/nextPageToken pairs
         """
-        compoundId = datamodel.FeatureSetCompoundId.parse(request.featureSetId)
+        compoundId = None
+        parentId = None
+        if request.featureSetId is not None:
+            compoundId = datamodel.FeatureSetCompoundId.parse(
+                request.featureSetId)
+        if request.parentId is not None:
+            compoundParentId = datamodel.FeatureCompoundId.parse(
+                request.parentId)
+            parentId = compoundParentId.featureId
+            # A client can optionally specify JUST the (compound) parentID,
+            # and the server needs to derive the dataset & featureSet
+            # from this (compound) parentID.
+            if compoundId is None:
+                compoundId = compoundParentId
+            else:
+                # check that the dataset and featureSet of the parent
+                # compound ID is the same as that of the featureSetId
+                if compoundParentId.datasetId \
+                        != compoundId.datasetId \
+                        or compoundParentId.featureSetId \
+                        != compoundId.featureSetId:
+                    raise exceptions.ParentIncompatibleWithFeatureSet()
+
         dataset = self.getDataRepository().getDataset(compoundId.datasetId)
         featureSet = dataset.getFeatureSet(compoundId.featureSetId)
-        return featureSet.featureObjectGenerator(request)
+        return featureSet.featureObjectGenerator(request.referenceName,
+                                                 request.start,
+                                                 request.end,
+                                                 request.pageToken,
+                                                 request.pageSize,
+                                                 request.ontologyTerms,
+                                                 parentId)
 
     def callSetsGenerator(self, request):
         """
