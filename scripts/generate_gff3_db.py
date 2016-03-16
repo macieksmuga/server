@@ -29,7 +29,6 @@ _dbTableSQL = (
                 "CREATE TABLE FEATURE( "
                 "id TEXT PRIMARY KEY NOT NULL, "
                 "parent_id TEXT, "
-                "child_ids TEXT, "
                 "reference_name TEXT, "
                 "source TEXT, "
                 "ontology_term TEXT, "
@@ -37,6 +36,7 @@ _dbTableSQL = (
                 "end INT, "
                 "score REAL, "
                 "strand TEXT, "
+                "sibling_rank INT, "
                 "attributes TEXT);"
                 )
 
@@ -72,25 +72,23 @@ class Gff32Db(object):
             feature = gff3Data.byFeatureId[featureId][0]
             rowInsertSQL = "INSERT INTO FEATURE VALUES("
             rowInsertSQL += "'{}', ".format(featureId)
-
-            # FIXME: Ignores any parent IDs besides the first one.
+            # Ignores any parent IDs besides the first one.
             parentIds = [parent.featureId for parent in feature.parents]
             if len(parentIds) == 0:
                 rowInsertSQL += "'',"
             else:
                 rowInsertSQL += "'{}', ".format(parentIds[0])
-
-            # FIXME: No current way to get childIDs in correct order.
-            childIds = [child.featureId for child in feature.children]
-            rowInsertSQL += "'{}', ".format(_db_serialize(childIds))
-
             rowInsertSQL += "'{}', ".format(feature.seqname)
             rowInsertSQL += "'{}', ".format(feature.source)
             rowInsertSQL += "'{}', ".format(feature.type)
-            rowInsertSQL += "'{}', ".format(feature.start)
-            rowInsertSQL += "'{}', ".format(feature.end)
-            rowInsertSQL += "'{}', ".format(feature.score)
+            rowInsertSQL += "{}, ".format(feature.start)
+            rowInsertSQL += "{}, ".format(feature.end)
+            if feature.score != '.':
+                rowInsertSQL += "{}, ".format(feature.score)
+            else:
+                rowInsertSQL += "NULL, "
             rowInsertSQL += "'{}', ".format(feature.strand)
+            rowInsertSQL += "NULL, "  # No way to get sibling rank from GFF3
             rowInsertSQL += "'{}');".format(_db_serialize(feature.attributes))
 
             # print(rowInsertSQL)  #DEBUG

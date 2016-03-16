@@ -33,14 +33,13 @@ import ga4gh.sqliteBackend as sqliteBackend
     GFF3 data is represented by rows in a single table, named FEATURE.
     The columns of the FEATURE table correspond to the columns of a GFF3,
     with three additional columns prepended representing the ID
-    of this feature, the ID of its parent (if any), and a whitespace
-    separated array of its child IDs.
+    of this feature, the ID of its parent (if any), and the optional
+    siblingRank.
 
     _featureColumns pairs represent the ordered (column_name, column_type).
 """
 _featureColumns = [('id', 'TEXT'),
                    ('parent_id', 'TEXT'),
-                   ('child_ids', 'TEXT'),
                    ('reference_name', 'TEXT'),
                    ('source', 'TEXT'),
                    ('ontology_term', 'TEXT'),
@@ -48,6 +47,7 @@ _featureColumns = [('id', 'TEXT'),
                    ('end', 'INT'),
                    ('score', 'REAL'),
                    ('strand', 'TEXT'),  # limited to one of '+'/'-' or none.
+                   ('sibling_rank', 'INT'),
                    ('attributes', 'TEXT')  # JSON encoding of attributes dict
                    ]
 
@@ -243,10 +243,6 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
         gaFeature.referenceName = feature['reference_name']
         gaFeature.start = int(feature['start'])
         gaFeature.end = int(feature['end'])
-        print(feature['child_ids'])  # DEBUG
-        gaFeature.childIds = map(
-                self.getCompoundIdForFeatureId,
-                json.loads(feature['child_ids']))
         gaFeature.featureType = \
             self._sequenceOntology.getGaTermByName(feature['ontology_term'])
         gaFeature.attributes = json.loads(

@@ -800,27 +800,26 @@ class Feature(ProtocolElement):
     _schemaSource = """
 {"namespace": "org.ga4gh.models", "type": "record", "name": "Feature",
 "fields": [{"doc": "", "type": "string", "name": "id"}, {"doc": "",
-"type": "string", "name": "parentId"}, {"default": [], "doc": "",
-"type": {"items": "string", "type": "array"}, "name": "childIds"},
-{"doc": "", "type": "string", "name": "featureSetId"}, {"doc": "",
-"type": "string", "name": "referenceName"}, {"default": 0, "doc": "",
-"type": "long", "name": "start"}, {"doc": "", "type": "long", "name":
-"end"}, {"doc": "", "type": {"symbols": ["NEG_STRAND", "POS_STRAND"],
-"doc": "", "type": "enum", "name": "Strand"}, "name": "strand"},
-{"doc": "", "type": {"doc": "", "type": "record", "name":
-"OntologyTerm", "fields": [{"doc": "", "type": "string", "name":
-"id"}, {"default": null, "doc": "", "type": ["null", "string"],
-"name": "term"}, {"default": null, "doc": "", "type": ["null",
-"string"], "name": "sourceName"}, {"default": null, "doc": "", "type":
-["null", "string"], "name": "sourceVersion"}]}, "name":
-"featureType"}, {"doc": "", "type": {"doc": "", "type": "record",
-"name": "Attributes", "fields": [{"default": {}, "type": {"values":
-{"items": ["string", {"doc": "", "type": "record", "name":
-"ExternalIdentifier", "fields": [{"doc": "", "type": "string", "name":
-"database"}, {"doc": "", "type": "string", "name": "identifier"},
-{"doc": "", "type": "string", "name": "version"}]}, "OntologyTerm"],
-"type": "array"}, "type": "map"}, "name": "vals"}]}, "name":
-"attributes"}], "doc": ""}
+"type": "string", "name": "parentId"}, {"default": null, "doc": "",
+"type": ["null", "long"], "name": "siblingRank"}, {"doc": "", "type":
+"string", "name": "featureSetId"}, {"doc": "", "type": "string",
+"name": "referenceName"}, {"default": 0, "doc": "", "type": "long",
+"name": "start"}, {"doc": "", "type": "long", "name": "end"}, {"doc":
+"", "type": {"symbols": ["NEG_STRAND", "POS_STRAND"], "doc": "",
+"type": "enum", "name": "Strand"}, "name": "strand"}, {"doc": "",
+"type": {"doc": "", "type": "record", "name": "OntologyTerm",
+"fields": [{"doc": "", "type": "string", "name": "id"}, {"default":
+null, "doc": "", "type": ["null", "string"], "name": "term"},
+{"default": null, "doc": "", "type": ["null", "string"], "name":
+"sourceName"}, {"default": null, "doc": "", "type": ["null",
+"string"], "name": "sourceVersion"}]}, "name": "featureType"}, {"doc":
+"", "type": {"doc": "", "type": "record", "name": "Attributes",
+"fields": [{"default": {}, "type": {"values": {"items": ["string",
+{"doc": "", "type": "record", "name": "ExternalIdentifier", "fields":
+[{"doc": "", "type": "string", "name": "database"}, {"doc": "",
+"type": "string", "name": "identifier"}, {"doc": "", "type": "string",
+"name": "version"}]}, "OntologyTerm"], "type": "array"}, "type":
+"map"}, "name": "vals"}]}, "name": "attributes"}], "doc": ""}
 """
     schema = avro.schema.parse(_schemaSource)
     requiredFields = set([
@@ -852,9 +851,8 @@ class Feature(ProtocolElement):
         return embeddedTypes[fieldName]
 
     __slots__ = [
-        'attributes', 'childIds', 'end', 'featureSetId',
-        'featureType', 'id', 'parentId', 'referenceName', 'start',
-        'strand'
+        'attributes', 'end', 'featureSetId', 'featureType', 'id',
+        'parentId', 'referenceName', 'siblingRank', 'start', 'strand'
     ]
 
     def __init__(self, **kwargs):
@@ -869,13 +867,6 @@ class Feature(ProtocolElement):
         defined as fields. Additional, the following attributes are
         added:     * Score - the GFF3 score column     * Phase - the
         GFF3 phase column for CDS features.
-        """
-        self.childIds = kwargs.get(
-            'childIds', [])
-        """
-        Ordered array of Child Ids of this node.     Since not all
-        child nodes are ordered by genomic coordinates,     this can't
-        always be reconstructed from parentId's of the children alone.
         """
         self.end = kwargs.get(
             'end', None)
@@ -911,6 +902,14 @@ class Feature(ProtocolElement):
         """
         The reference on which this feature occurs.     (e.g. chr20 or
         X)
+        """
+        self.siblingRank = kwargs.get(
+            'siblingRank', None)
+        """
+        Optional rank (position) of feature among siblings, used
+        only if sibling features (ie. with same parent) are ordered
+        other than by genomic coordinates alone (as can happen with
+        alternative RNA splicing).
         """
         self.start = kwargs.get(
             'start', 0)
@@ -2644,13 +2643,13 @@ class SearchFeaturesResponse(SearchResponse):
 "type": {"items": {"namespace": "org.ga4gh.models", "type": "record",
 "name": "Feature", "fields": [{"doc": "", "type": "string", "name":
 "id"}, {"doc": "", "type": "string", "name": "parentId"}, {"default":
-[], "doc": "", "type": {"items": "string", "type": "array"}, "name":
-"childIds"}, {"doc": "", "type": "string", "name": "featureSetId"},
-{"doc": "", "type": "string", "name": "referenceName"}, {"default": 0,
-"doc": "", "type": "long", "name": "start"}, {"doc": "", "type":
-"long", "name": "end"}, {"doc": "", "type": {"symbols": ["NEG_STRAND",
-"POS_STRAND"], "doc": "", "type": "enum", "name": "Strand"}, "name":
-"strand"}, {"doc": "", "type": {"doc": "", "type": "record", "name":
+null, "doc": "", "type": ["null", "long"], "name": "siblingRank"},
+{"doc": "", "type": "string", "name": "featureSetId"}, {"doc": "",
+"type": "string", "name": "referenceName"}, {"default": 0, "doc": "",
+"type": "long", "name": "start"}, {"doc": "", "type": "long", "name":
+"end"}, {"doc": "", "type": {"symbols": ["NEG_STRAND", "POS_STRAND"],
+"doc": "", "type": "enum", "name": "Strand"}, "name": "strand"},
+{"doc": "", "type": {"doc": "", "type": "record", "name":
 "OntologyTerm", "fields": [{"doc": "", "type": "string", "name":
 "id"}, {"default": null, "doc": "", "type": ["null", "string"],
 "name": "term"}, {"default": null, "doc": "", "type": ["null",
