@@ -32,7 +32,7 @@ _dbTableSQL = (
                 "child_ids TEXT, "
                 "reference_name TEXT, "
                 "source TEXT, "
-                "ontology_term TEXT, "
+                "feature_type TEXT, "
                 "start INT, "
                 "end INT, "
                 "score REAL, "
@@ -64,41 +64,32 @@ class Gff32Db(object):
                   file=sys.stderr)
             exit()
 
-    def run(self):
-        print("Running GFF3 parser...", file=sys.stderr)
-        gff3Data = gff3.Gff3Parser(self.gff3File).parse()
+            # # FIXME: No current way to get childIDs in correct order.
+            # childIds = [child.featureId for child in feature.children]
+            # rowInsertSQL += "'{}', ".format(_db_serialize(childIds))
 
-        print("Generating database...", file=sys.stderr)
+    def run(self):
+        print("Parsing file...", file=sys.stderr)
         dbconn = sqlite3.connect(self.dbFile)
         dbcur = dbconn.cursor()
         dbcur.execute(_dbTableSQL)  # create table
-        for featureId in gff3Data.byFeatureId.keys():
-            feature = gff3Data.byFeatureId[featureId][0]
-            rowInsertSQL = "INSERT INTO FEATURE VALUES("
-            rowInsertSQL += "'{}', ".format(featureId)
-
-            # FIXME: Ignores any parent IDs besides the first one.
+        gff3Parser = gff3.Gff3Parser(self.gff3File)
+        for feature in gff3Parser.parse():
             parentIds = [parent.featureId for parent in feature.parents]
-            if len(parentIds) == 0:
-                rowInsertSQL += "'',"
-            else:
-                rowInsertSQL += "'{}', ".format(parentIds[0])
-
-            # FIXME: No current way to get childIDs in correct order.
-            childIds = [child.featureId for child in feature.children]
-            rowInsertSQL += "'{}', ".format(_db_serialize(childIds))
-
-            rowInsertSQL += "'{}', ".format(feature.seqname)
-            rowInsertSQL += "'{}', ".format(feature.source)
-            rowInsertSQL += "'{}', ".format(feature.type)
-            rowInsertSQL += "'{}', ".format(feature.start)
-            rowInsertSQL += "'{}', ".format(feature.end)
-            rowInsertSQL += "'{}', ".format(feature.score)
-            rowInsertSQL += "'{}', ".format(feature.strand)
-            rowInsertSQL += "'{}');".format(_db_serialize(feature.attributes))
-
-            # print(rowInsertSQL)  #DEBUG
-            dbcur.execute(rowInsertSQL)
+            parentId = parentIds[0] if len(parentIds) > 0 else ''
+            dbcur.execute(
+                "INSERT INTO FEATURE VALUES(?,?,?,?,?,?,?,?,?,?,?)", (
+                    feature.featureId,
+                    parentId,
+                    _db_serialize([]),  # FIXME childIds
+                    feature.seqname,
+                    feature.source,
+                    feature.type,
+                    feature.start,
+                    feature.end,
+                    feature.score,
+                    feature.strand,
+                    _db_serialize(feature.attributes)))
             dbconn.commit()
         dbcur.close()
         dbconn.close()

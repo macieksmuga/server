@@ -46,7 +46,7 @@ _featureColumns = [
     ('child_ids', 'TEXT'),
     ('reference_name', 'TEXT'),
     ('source', 'TEXT'),
-    ('ontology_term', 'TEXT'),
+    ('feature_type', 'TEXT'),
     ('start', 'INT'),
     ('end', 'INT'),
     ('score', 'REAL'),
@@ -90,7 +90,7 @@ class Gff3DbBackend(sqliteBackend.SqliteBackedDataSource):
             sql += "AND parent_id = ? "
             sql_args += (parentId,)
         if featureTypes is not None and len(featureTypes) > 0:
-            sql += "AND ontology_term IN ("
+            sql += "AND feature_type IN ("
             sql += ", ".join(["?", ] * len(featureTypes))
             sql += ") "
             sql_args += tuple(featureTypes)
@@ -124,7 +124,7 @@ class Gff3DbBackend(sqliteBackend.SqliteBackedDataSource):
             sql += "AND parent_id = ? "
             sql_args += (parentId,)
         if featureTypes is not None and len(featureTypes) > 0:
-            sql += "AND ontology_term IN ("
+            sql += "AND feature_type IN ("
             sql += ", ".join(["?", ] * len(featureTypes))
             sql += ") "
             sql_args += tuple(featureTypes)
@@ -376,7 +376,7 @@ class Gff3DbFeatureSet(AbstractFeatureSet):
                 self.getCompoundIdForFeatureId,
                 json.loads(feature['child_ids']))
         gaFeature.featureType = \
-            self._sequenceOntology.getGaTermByName(feature['ontology_term'])
+            self._sequenceOntology.getGaTermByName(feature['feature_type'])
         gaFeature.attributes = protocol.Attributes()
         gaFeature.attributes.vals = json.loads(feature['attributes'])
         return gaFeature

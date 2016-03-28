@@ -132,89 +132,10 @@ class Feature(object):
         return featId
 
 
-class Gff3Set(object):
-    """
-    A set of GFF3 sequence annotations
-    """
-    def __init__(self, fileName=None):
-        self.fileName = fileName
-        self.roots = set()     # root nodes (those with out parents)
-        # index of features by id. GFF3 allows disjoint features with
-        # the same id.  None is used to store features without ids
-        self.byFeatureId = collections.defaultdict(list)
-
-    def add(self, feature):
-        """
-        Add a feature record by featureID (which may be None)
-
-        :param feature: Feature object being added.
-        """
-        self.byFeatureId[feature.featureId].append(feature)
-
-    def _linkFeature(self, feature):
-        """
-        Link a feature with its parents.
-        """
-        parentIds = feature.attributes.get("Parent")
-        if parentIds is None:
-            self.roots.add(feature)
-        else:
-            for parentId in parentIds:
-                self._linkToParent(feature, parentId)
-
-    def _linkToParent(self, feature, parentId):
-        """
-        Link a feature with its children
-        """
-        parentParts = self.byFeatureId.get(parentId)
-        if parentParts is None:
-            raise GFF3Exception(
-                "Parent feature does not exist: {}".format(parentId),
-                self.fileName)
-        # parent maybe disjoint
-        for parentPart in parentParts:
-            feature.parents.add(parentPart)
-            parentPart.children.add(feature)
-
-    def linkChildFeaturesToParents(self):
-        """
-        finish loading the set, constructing the tree
-        """
-        # features maybe disjoint
-        for featureParts in self.byFeatureId.itervalues():
-            for feature in featureParts:
-                self._linkFeature(feature)
-
-    @staticmethod
-    def _recSortKey(r):
-        """
-        Sort order for Features, by genomic coordinate,
-        disambiguated by feature type (alphabetically).
-        """
-        return (r.seqname, r.start, -r.end, r.type)
-
-    def _writeRec(self, fh, rec):
-        """
-        Writes a single record to a file provided by the filehandle fh.
-        """
-        fh.write(str(rec) + "\n")
-        for child in sorted(rec.children, key=self._recSortKey):
-            self._writeRec(fh, child)
-
-    def write(self, fh):
-        """
-        Write set to a GFF3 format file.
-
-        :param file fh: file handle for file to write to
-        """
-        fh.write(GFF3_HEADER+"\n")
-        for root in sorted(self.roots, key=self._recSortKey):
-            self._writeRec(fh, root)
-
 
 class Gff3Parser(object):
     """
-    Parses a GFF3 file into a Gff3Set. Performs basic validation,
+    Parses a GFF3 file line by line. Performs basic validation,
     but does not fully test for conformance to GFF3 spec.
     """
 
@@ -225,17 +146,6 @@ class Gff3Parser(object):
         """
         self.fileName = fileName
         self.lineNumber = 0
-
-    def _open(self):
-        """
-        open input file, optionally with decompression
-        """
-        if self.fileName.endswith(".gz"):
-            return gzip.open(self.fileName)
-        elif self.fileName.endswith(".bz2"):
-            return bz2.BZ2File(self.fileName)
-        else:
-            return open(self.fileName)
 
     # parses `attr=val'; GFF3 spec is not very specific on the allowed values.
     SPLIT_ATTR_RE = re.compile("^([a-zA-Z][^=]*)=(.*)$")
@@ -274,7 +184,7 @@ class Gff3Parser(object):
 
     GFF3_NUM_COLS = 9
 
-    def _parseRecord(self, gff3Set, line):
+    def _parseRecord(self, line):
         """
         Parse one record.
         """
@@ -291,7 +201,7 @@ class Gff3Parser(object):
             int(row[3]), int(row[4]),
             row[5], row[6], row[7],
             self._parseAttrs(row[8]))
-        gff3Set.add(feature)
+        return(feature)
 
     # spaces or comment line
     IGNORED_LINE_RE = re.compile("(^[ ]*$)|(^[ ]*#.*$)")
@@ -307,23 +217,15 @@ class Gff3Parser(object):
                 "First line is not GFF3 header ({}), got: {}".format(
                     GFF3_HEADER, line), self.fileName, self.lineNumber)
 
-    def _parseLine(self, gff3Set, line):
-        if self.lineNumber == 1:
-            self._checkHeader(line)
-        elif not self._isIgnoredLine(line):
-            self._parseRecord(gff3Set, line)
-
     def parse(self):
         """
-        Run the parse and return the resulting Gff3Set object.
+        Run the parse, yield Feature objects as they get generated.
         """
-        fh = self._open()
-        try:
-            gff3Set = Gff3Set(self.fileName)
+        with open(self.fileName) as fh:
             for line in fh:
                 self.lineNumber += 1
-                self._parseLine(gff3Set, line[0:-1])
-        finally:
-            fh.close()
-        gff3Set.linkChildFeaturesToParents()
-        return gff3Set
+            if self.lineNumber == 1:
+                self._checkHeader(line)
+            elif not self._isIgnoredLine(line):
+                feature = self._parseRecord(line[0:-1])
+                yield self.lineNumber # feature
