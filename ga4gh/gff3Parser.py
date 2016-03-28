@@ -224,8 +224,8 @@ class Gff3Parser(object):
         with open(self.fileName) as fh:
             for line in fh:
                 self.lineNumber += 1
-            if self.lineNumber == 1:
-                self._checkHeader(line)
-            elif not self._isIgnoredLine(line):
-                feature = self._parseRecord(line[0:-1])
-                yield self.lineNumber # feature
+                if self.lineNumber == 1:
+                    self._checkHeader(line)
+                elif not self._isIgnoredLine(line):
+                    feature = self._parseRecord(line[0:-1])
+                    yield feature

@@ -69,7 +69,7 @@ class Gff32Db(object):
             # rowInsertSQL += "'{}', ".format(_db_serialize(childIds))
 
     def run(self):
-        print("Parsing file...", file=sys.stderr)
+        print("Parsing file {}...".format(self.gff3File), file=sys.stderr)
         dbconn = sqlite3.connect(self.dbFile)
         dbcur = dbconn.cursor()
         dbcur.execute(_dbTableSQL)  # create table
