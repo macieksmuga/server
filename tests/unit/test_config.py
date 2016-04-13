@@ -10,6 +10,7 @@ from __future__ import unicode_literals
 import unittest
 import flask
 import os
+import ga4gh.serverconfig
 
 
 class TestConfig(unittest.TestCase):
@@ -22,7 +23,7 @@ class TestConfig(unittest.TestCase):
     run.
     """
 
-    configStr = None
+    configObj = ga4gh.serverconfig.BaseConfig()
     configEnv = None
     configFile = None
 
@@ -33,9 +34,9 @@ class TestConfig(unittest.TestCase):
         """
         self.app = flask.Flask(__name__)
         try:
-            self.app.config.from_object(self.configStr)
+            self.app.config.from_object(self.configObj)
         except Exception:
-            self.fail("Cannot create app from {0}".format(self.configStr))
+            self.fail("Cannot create app from {0}".format(self.configObj))
         if os.environ.get(self.configEnv) is not None:
             self.app.config.from_envvar(self.configEnv)
         if self.configFile is not None:
