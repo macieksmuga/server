@@ -1869,6 +1869,14 @@ class RepoManager(object):
             "-R", "--referenceSetName", default=None, help=helpText)
 
     @classmethod
+    def addReferenceSetAssemblyIdOption(cls, subparser, objectType):
+        helpText = (
+            "the assembly ID to associate with this {}"
+        ).format(objectType)
+        subparser.add_argument(
+            "-A", "--assemblyId", default=None, help=helpText)
+
+    @classmethod
     def addOntologyNameArgument(cls, subparser):
         subparser.add_argument(
             "ontologyName",
