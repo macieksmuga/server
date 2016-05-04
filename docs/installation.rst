@@ -325,59 +325,70 @@ This will set the environment variable which is read by config.py
 
 You can then get logs from the docker container by running ``docker logs (container)`` e.g. ``docker logs ga4gh_demo``
 
------------------------
-Deployment on Mac OS X
------------------------
-To deploy on Mac OS X, you need to install libraries and header code for `Python 2.7 <https://www.python.org/download/releases/2.7/>`_. It will be a lot easier if you have `Homebrew <http://brew.sh/index.html>`_, which is called the missing package manager for OS X, installed first. To install Homebrew, please paste the following at a Terminal prompt ($):
+----------------------------------------------
+Installing the development version on Mac OS X
+----------------------------------------------
+
+**Prerequisites**
+
+First install libraries and header code for
+`Python 2.7 <https://www.python.org/download/releases/2.7/>`_.
+It will be a lot easier if you have `Homebrew <http://brew.sh/index.html>`_,
+the "missing package manager" for OS X, installed first.
+To install Homebrew, paste the following at a Terminal prompt ($):
 
 .. code-block:: bash
 
   $ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
-1. Now you can use ``brew install`` to install libraries for Python.
+Now use ``brew install`` to install the library dependencies:
 
 .. code-block:: bash
 
   $ brew install openssl
-  $ pip install virtualenv 
+  $ pip install virtualenv
 
-2. Download source code from GitHub to a target folder, here we create a folder ``/ga4gh/`` under home directory. First of all, you need to `set up github to work <https://help.github.com/articles/set-up-git/>`_ from your command line (Terminal) if you have not done so.
+**Install**
+
+Download source code from GitHub to the project target folder, here assumed to be ``~/ga4gh``: (If you haven't already done so, `set up github <https://help.github.com/articles/set-up-git/>`_  to work from your command line.)
 
 .. code-block:: bash
 
   $ mkdir ~/ga4gh
-  $ cd ~/ga4gh/
+  $ cd ~/ga4gh
   $ git clone https://github.com/ga4gh/server.git
 
-3. Install Python dependencies:
+Install Python dependencies:
 
 .. code-block:: bash
 
   $ cd server/
-  $ pip install -r dev-requirements.txt 
-  
-One possible error may be "ssl.h not found"; if so, you will have to tell the compiler about the newly downloaded headers using ``export C_INCLUDE_PATH="/usr/local/opt/openssl/include"``.
+  $ pip install -r dev-requirements.txt
 
-4. Download and extract the example data:
+You may encounter the error "ssl.h not found"; if so, you will have to tell the compiler about the newly downloaded headers with: ``export C_INCLUDE_PATH="/usr/local/opt/openssl/include"``.
+
+**Test and run**
+
+Run tests to verify the install:
+
+.. code-block:: bash
+
+  $ python scripts/run_tests.py
+
+5. Download and extract the example data:
 
 .. code-block:: bash
 
   $ curl -L -O https://github.com/ga4gh/server/releases/download/data/ga4gh-example-data-v3.2.tar
   $ tar -xf ga4gh-example-data-v3.2.tar
 
-5. Start server:
+6. Start the server:
 
 .. code-block:: bash
 
   $ python server-dev.py
 
-Point a web browser to `http://localhost:8000/ <http://localhost:8000/>`_.
-
-6. Run tests.
-
-.. code-block:: bash
-
-  $ python scripts/run_tests.py
+Point a web browser to `http://localhost:8000/ <http://localhost:8000/>`_ and enjoy.
 
 
 
