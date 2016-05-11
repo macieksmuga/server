@@ -6,7 +6,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 
-import ga4gh.datarepo as datarepo
 import ga4gh.datamodel as datamodel
 import ga4gh.datamodel.datasets as datasets
 import ga4gh.datamodel.rna_quantification as rna_quantification
@@ -77,15 +76,14 @@ class RnaQuantificationTest(datadriven.DataDrivenTest):
     built by the rna_quantification.RNASeqResult object.
     """
     def __init__(self, rnaQuantificationLocalId, baseDir):
-        self._dataset = datasets.AbstractDataset(_datasetName)
-        self._datarepo = datarepo.FileSystemDataRepository("tests/data")
+        self._dataset = datasets.Dataset(_datasetName)
         rnaQuantificationId = rnaQuantificationLocalId[:-3]  # remove '.db'
         super(RnaQuantificationTest, self).__init__(
             rnaQuantificationId, baseDir)
 
     def getDataModelInstance(self, localId, dataPath):
         return rna_quantification.RNASeqResult(
-            self._dataset, localId, dataPath, self._datarepo)
+            self._dataset, localId, dataPath, None)
 
     def getProtocolClass(self):
         return protocol.RnaQuantification
